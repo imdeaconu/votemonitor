@@ -1,7 +1,8 @@
 import { authApi } from '@/common/auth-api';
 import { Button } from '@/components/ui/button';
+import { ComposableFormField } from '@/components/ui/composable-form-field';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import TagsSelectFormField from '@/components/ui/tag-selector';
 import { toast } from '@/components/ui/use-toast';
@@ -80,70 +81,21 @@ function CreateMonitoringObserverDialog({ open, onOpenChange }: CreateMonitoring
         <div className='flex flex-col gap-3'>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-              <FormField
+              <ComposableFormField control={form.control} label={t('firstName')} name='firstName' Input={Input} />
+              <ComposableFormField control={form.control} label={t('lastName')} name='lastName' Input={Input} />
+              <ComposableFormField control={form.control} label={t('email')} name='email' Input={Input} />
+              <ComposableFormField control={form.control} label={t('phone')} name='phoneNumber' Input={Input} />
+              <ComposableFormField
                 control={form.control}
-                name='firstName'
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>{t('firstName')}</FormLabel>
-                    <Input placeholder={t('firstName')} {...field} {...fieldState} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='lastName'
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>{t('lastName')}</FormLabel>
-                    <Input placeholder={t('lastName')} {...field} {...fieldState} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='email'
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>{t('email')}</FormLabel>
-                    <Input placeholder={t('email')} {...field} {...fieldState} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='phoneNumber'
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>{t('phone')}</FormLabel>
-                    <Input placeholder={t('phone')} {...field} {...fieldState} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
+                label='Tags'
                 name='tags'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className='text-left'>Tags</FormLabel>
-                    <FormControl>
-                      <TagsSelectFormField
-                        options={availableTags?.filter((tag) => !field.value?.includes(tag)) ?? []}
-                        defaultValue={field.value}
-                        onValueChange={field.onChange}
-                        placeholder='Observer tags'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                renderedInput={({ field }) => (
+                  <TagsSelectFormField
+                    options={availableTags?.filter((tag) => !field.value?.includes(tag)) ?? []}
+                    defaultValue={field.value}
+                    onValueChange={field.onChange}
+                    placeholder='Observer tags'
+                  />
                 )}
               />
 
