@@ -5,8 +5,8 @@ import { redirectIfNotAuth } from '@/lib/utils';
 import { createFileRoute } from '@tanstack/react-router';
 import { useContext } from 'react';
 
-import { DataSources, type FunctionComponent } from '../common/types';
 import { z } from 'zod';
+import { DataSources, type FunctionComponent } from '../common/types';
 const StatisticsDetails = (): FunctionComponent => {
   const { userRole } = useContext(AuthContext);
 

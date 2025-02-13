@@ -7,6 +7,7 @@ import { ReactElement, useState } from 'react';
 
 import MonitoringObserversList from '../MonitoringObserversList/MonitoringObserversList';
 import PushMessages from '../PushMessages/PushMessages';
+import LiveChat from '@/features/live-chat/LiveChat';
 
 export default function MonitoringObserversDashboard(): ReactElement {
   const { tab } = Route.useParams();
@@ -28,15 +29,20 @@ export default function MonitoringObserversDashboard(): ReactElement {
       subtitle='View all monitoring observers you imported as an NGO admin and invite them to current election observation event.'
       enableBreadcrumbs={false}>
       <Tabs defaultValue='list' value={currentTab} onValueChange={handleTabChange}>
-        <TabsList className='grid grid-cols-2 bg-gray-200 w-[400px] mb-4'>
+        <TabsList className='grid grid-cols-3 bg-gray-200 w-[600px] mb-4'>
           <TabsTrigger value='list'>Monitoring observers</TabsTrigger>
           <TabsTrigger value='push-messages'>Push messages</TabsTrigger>
+          <TabsTrigger value='live-chat'>Live chat</TabsTrigger>
         </TabsList>
         <TabsContent value='list'>
           <MonitoringObserversList />
         </TabsContent>
         <TabsContent value='push-messages'>
           <PushMessages />
+        </TabsContent>
+
+        <TabsContent value='live-chat'>
+          <LiveChat />
         </TabsContent>
       </Tabs>
     </Layout>
