@@ -19,6 +19,6 @@ public class Validator : Validator<Request>
             .NotEmpty();
 
         RuleFor(x => x.PhoneNumber)
-            .MaximumLength(256);
+            .MaximumLength(32);
     }
 }

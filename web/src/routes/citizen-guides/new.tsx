@@ -11,5 +11,9 @@ export const Route = createFileRoute('/citizen-guides/new')({
 });
 
 function NewCitizenGuide() {
-  return <AddTextGuide guidePageType={GuidePageType.Citizen} />;
+  return (
+    <div className='p-2'>
+      <AddTextGuide guidePageType={GuidePageType.Citizen} />
+    </div>
+  );
 }

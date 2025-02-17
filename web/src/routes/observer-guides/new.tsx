@@ -11,5 +11,9 @@ export const Route = createFileRoute('/observer-guides/new')({
 });
 
 function NewObserverGuide() {
-  return <AddTextGuide guidePageType={GuidePageType.Observer} />;
+  return (
+    <div className='p-2'>
+      <AddTextGuide guidePageType={GuidePageType.Observer} />
+    </div>
+  );
 }

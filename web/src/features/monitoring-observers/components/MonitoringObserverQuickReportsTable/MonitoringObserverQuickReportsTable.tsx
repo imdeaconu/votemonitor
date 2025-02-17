@@ -48,7 +48,7 @@ export function MonitoringObserverQuickReportsTable({
 
   const navigateToQuickReport = useCallback(
     (quickReportId: string) => {
-      navigate({ to: '/responses/quick-reports/$quickReportId', params: { quickReportId } });
+      void navigate({ to: '/responses/quick-reports/$quickReportId', params: { quickReportId } });
     },
     [navigate]
   );

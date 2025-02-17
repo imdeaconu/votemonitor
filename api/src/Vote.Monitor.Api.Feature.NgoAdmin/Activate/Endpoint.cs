@@ -4,8 +4,7 @@ using Vote.Monitor.Core.Extensions;
 
 namespace Vote.Monitor.Api.Feature.NgoAdmin.Activate;
 
-public class Endpoint(
-    UserManager<ApplicationUser> userManager,
+public class Endpoint(UserManager<ApplicationUser> userManager,
     IReadRepository<NgoAdminAggregate> repository) : Endpoint<Request, Results<NoContent, NotFound, ValidationProblem>>
 {
     public override void Configure()
@@ -17,8 +16,7 @@ public class Endpoint(
         Summary(x => { x.Description = "Activates account of a ngo admin"; });
     }
 
-    public override async Task<Results<NoContent, NotFound, ValidationProblem>> ExecuteAsync(Request req,
-        CancellationToken ct)
+    public override async Task<Results<NoContent, NotFound, ValidationProblem>> ExecuteAsync(Request req, CancellationToken ct)
     {
         var specification = new GetNgoAdminByIdSpecification(req.NgoId, req.Id);
         var ngoAdmin = await repository.SingleOrDefaultAsync(specification, ct);

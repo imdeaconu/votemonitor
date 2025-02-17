@@ -37,5 +37,9 @@ export const Route = createFileRoute('/monitoring-observers/edit/$monitoringObse
 });
 
 function Edit() {
-  return <EditMonitoringObserver />;
+  return (
+    <div className='p-2'>
+      <EditMonitoringObserver />
+    </div>
+  );
 }

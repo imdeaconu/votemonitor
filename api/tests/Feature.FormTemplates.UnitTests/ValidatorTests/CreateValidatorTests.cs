@@ -2,7 +2,6 @@
 using Vote.Monitor.Core.Constants;
 using Vote.Monitor.Core.Models;
 using Vote.Monitor.Domain.Entities.FormAggregate;
-using Vote.Monitor.Domain.Entities.FormBase;
 using Vote.Monitor.Form.Module.Requests;
 
 namespace Feature.FormTemplates.UnitTests.ValidatorTests;

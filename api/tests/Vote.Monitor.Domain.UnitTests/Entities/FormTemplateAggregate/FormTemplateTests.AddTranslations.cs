@@ -1,5 +1,4 @@
 ﻿using Vote.Monitor.Core.Helpers;
-using Vote.Monitor.Domain.Entities.FormBase;
 using Vote.Monitor.Domain.Entities.FormTemplateAggregate;
 using Vote.Monitor.TestUtils.Fakes.Aggregates;
 
@@ -16,8 +15,7 @@ public partial class FormTests
         var description = new TranslatedStringFaker(languages).Generate();
 
         var formTemplate = FormTemplate.Create(FormType.Voting, "code", LanguagesList.RO.Iso1, name,
-            description, languages, icon: null,
-            []);
+            description, languages, []);
 
         string[] newLanguages = [LanguagesList.RO.Iso1, LanguagesList.HU.Iso1];
 
@@ -37,8 +35,7 @@ public partial class FormTests
         var description = new TranslatedStringFaker(languages).Generate();
 
         var formTemplate = FormTemplate.Create(FormType.Voting, "code", LanguagesList.RO.Iso1, name,
-            description, languages, icon: null,
-            []);
+            description, languages, []);
 
         var formBefore = formTemplate.DeepClone();
 
@@ -58,8 +55,7 @@ public partial class FormTests
         var description = new TranslatedStringFaker(languages).Generate();
 
         var formTemplate = FormTemplate.Create(FormType.Voting, "code", LanguagesList.RO.Iso1, name,
-            description, languages, icon: null,
-            []);
+            description, languages, []);
 
         var formBefore = formTemplate.DeepClone();
 
@@ -79,8 +75,7 @@ public partial class FormTests
         var description = new TranslatedStringFaker(languages).Generate();
 
         var formTemplate = FormTemplate.Create(FormType.Voting, "code", LanguagesList.RO.Iso1, name,
-            description, languages, icon: null,
-            []);
+            description, languages, []);
 
         string[] newLanguages = [LanguagesList.RO.Iso1, LanguagesList.HU.Iso1];
 
@@ -99,7 +94,7 @@ public partial class FormTests
         string[] languages = [LanguagesList.RO.Iso1, LanguagesList.EN.Iso1, LanguagesList.UK.Iso1];
         var name = new TranslatedStringFaker(languages).Generate();
         var description = new TranslatedStringFaker(languages).Generate();
-
+        
         BaseQuestion[] questions =
         [
             new TextQuestionFaker(languages).Generate(),
@@ -111,8 +106,7 @@ public partial class FormTests
         ];
 
         var formTemplate = FormTemplate.Create(FormType.Voting, "code", LanguagesList.RO.Iso1, name,
-            description, languages, icon: null,
-            questions);
+            description, languages, questions);
 
         string[] newLanguages = [LanguagesList.RO.Iso1, LanguagesList.HU.Iso1];
 

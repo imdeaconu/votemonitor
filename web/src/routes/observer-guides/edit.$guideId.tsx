@@ -19,5 +19,9 @@ export const Route = createFileRoute('/observer-guides/edit/$guideId')({
 function EditObserverGuide() {
   const { guideId } = Route.useParams();
 
-  return <EditTextGuide guidePageType={GuidePageType.Observer} guideId={guideId} />;
+  return (
+    <div className='p-2'>
+      <EditTextGuide guidePageType={GuidePageType.Observer} guideId={guideId} />
+    </div>
+  );
 }

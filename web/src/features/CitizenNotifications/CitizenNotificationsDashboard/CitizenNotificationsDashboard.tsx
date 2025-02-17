@@ -73,7 +73,7 @@ function CitizenNotificationsDashboard(): FunctionComponent {
 
   const navigateToPushMessage = useCallback(
     (notificationId: string) => {
-      navigate({ to: '/citizen-notifications/view/$notificationId', params: { notificationId } });
+      void navigate({ to: '/citizen-notifications/view/$notificationId', params: { notificationId } });
     },
     [navigate]
   );

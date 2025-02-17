@@ -40,7 +40,9 @@ import { targetedMonitoringObserverColDefs } from '../../utils/column-defs';
 
 const createPushMessageSchema = z.object({
   title: z.string().min(1, { message: 'Your message must have a title before sending.' }),
-  messageBody: z.string().min(1, { message: 'Your message must have a detailed description before sending.' }),
+  messageBody: z
+    .string()
+    .min(1, { message: 'Your message must have a detailed description before sending.' })
 });
 
 function PushMessageForm(): FunctionComponent {
@@ -55,11 +57,7 @@ function PushMessageForm(): FunctionComponent {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    navigate({
-      to: '.',
-      replace: true,
-      search: (prev: any) => ({ ...prev, [FILTER_KEY.SearchText]: debouncedSearchText }),
-    });
+    void navigate({ search: (prev) => ({ ...prev, [FILTER_KEY.SearchText]: debouncedSearchText }) });
   }, [debouncedSearchText]);
 
   useEffect(() => {
@@ -203,7 +201,7 @@ function PushMessageForm(): FunctionComponent {
                     value={searchText}
                     placeholder='Search'
                   />
-                  <MonitoringObserverTagsSelect isUsingAlternativeFilteringKey />
+                  <MonitoringObserverTagsSelect />
                   <MonitoringObserverStatusSelect />
                   <FormTypeFilter />
                   <FormSubmissionsFormFilter />

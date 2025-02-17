@@ -20,7 +20,7 @@ export function useCoalitionDetails(electionRoundId: string): CoalitionDetailRes
         ...response.data,
       };
     },
-    enabled: !!electionRoundId,
     staleTime: STALE_TIME,
+    enabled: !!electionRoundId,
   });
 }

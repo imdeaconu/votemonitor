@@ -1,4 +1,4 @@
-import { FormType } from '@/common/types';
+import { ZFormType } from '@/common/types';
 import { useCurrentElectionRoundStore } from '@/context/election-round.store';
 import { useElectionRoundDetails } from '@/features/election-event/hooks/election-event-hooks';
 import { SelectFilter, SelectFilterOption } from '@/features/filtering/components/SelectFilter';
@@ -20,36 +20,36 @@ export const FormTypeFilter: FC = () => {
   const selectOptions = useMemo(() => {
     const options: SelectFilterOption[] = [
       {
-        value: FormType.Opening,
-        label: mapFormType(FormType.Opening),
+        value: ZFormType.Values.Opening,
+        label: mapFormType(ZFormType.Values.Opening),
       },
       {
-        value: FormType.Voting,
-        label: mapFormType(FormType.Voting),
+        value: ZFormType.Values.Voting,
+        label: mapFormType(ZFormType.Values.Voting),
       },
       {
-        value: FormType.ClosingAndCounting,
-        label: mapFormType(FormType.ClosingAndCounting),
+        value: ZFormType.Values.ClosingAndCounting,
+        label: mapFormType(ZFormType.Values.ClosingAndCounting),
       },
       {
-        value: FormType.PSI,
-        label: mapFormType(FormType.PSI),
+        value: ZFormType.Values.PSI,
+        label: mapFormType(ZFormType.Values.PSI),
       },
       {
-        value: FormType.CitizenReporting,
-        label: mapFormType(FormType.CitizenReporting),
+        value: ZFormType.Values.CitizenReporting,
+        label: mapFormType(ZFormType.Values.CitizenReporting),
       },
     ];
 
     if (electionRound?.isMonitoringNgoForCitizenReporting) {
       options.push({
-        value: FormType.IncidentReporting,
-        label: mapFormType(FormType.IncidentReporting),
+        value: ZFormType.Values.IncidentReporting,
+        label: mapFormType(ZFormType.Values.IncidentReporting),
       });
     }
     options.push({
-      value: FormType.Other,
-      label: mapFormType(FormType.Other),
+      value: ZFormType.Values.Other,
+      label: mapFormType(ZFormType.Values.Other),
     });
 
     return options;

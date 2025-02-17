@@ -1,9 +1,7 @@
 import { authApi } from '@/common/auth-api';
 import { DateTimeFormat } from '@/common/formats';
-import { ElectionRoundStatus, FormStatus, FormType } from '@/common/types';
-import AddFormTranslationsDialog, {
-  useAddFormTranslationsDialog,
-} from '@/components/AddFormTranslationsDialog/AddFormTranslationsDialog';
+import { ElectionRoundStatus, ZFormType, ZTranslationStatus } from '@/common/types';
+import CreateDialog from '@/components/dialogs/CreateDialog';
 import { DataTableColumnHeader } from '@/components/ui/DataTable/DataTableColumnHeader';
 import { QueryParamsDataTable } from '@/components/ui/DataTable/QueryParamsDataTable';
 import { useConfirm } from '@/components/ui/alert-dialog-provider';
@@ -21,8 +19,6 @@ import { LanguageBadge } from '@/components/ui/language-badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
-import { useCurrentElectionRoundStore } from '@/context/election-round.store';
-import { useElectionRoundDetails } from '@/features/election-event/hooks/election-event-hooks';
 import { useFilteringContainer } from '@/features/filtering/hooks/useFilteringContainer';
 import { useLanguages } from '@/hooks/languages';
 import i18n from '@/i18n';
@@ -43,13 +39,13 @@ import { ColumnDef, createColumnHelper, Row } from '@tanstack/react-table';
 import { useDebounce } from '@uidotdev/usehooks';
 import { format } from 'date-fns';
 import { useMemo, useState, type ReactElement } from 'react';
-import { NgoFormBase } from '../../models';
+import { FormBase, FormStatus } from '../../models/form';
 import { formsKeys, useForms } from '../../queries';
-import EditFormAccessDialog, { useEditFormAccessDialog } from './EditFormAccessDialog';
+import AddTranslationsDialog, { useAddTranslationsDialog } from './AddTranslationsDialog';
 import { FormFilters } from './FormFilters/FormFilters';
-import FormStatusBadge from '@/components/FormStatusBadge/FormStatusBadge';
-import FormTranslationStatusBadge from '@/components/FormTranslationStatusBadge/FormTranslationStatusBadge';
-import { difference } from 'lodash';
+import EditFormAccessDialog, { useEditFormAccessDialog } from './EditFormAccessDialog';
+import { useElectionRoundDetails } from '@/features/election-event/hooks/election-event-hooks';
+import { useCurrentElectionRoundStore } from '@/context/election-round.store';
 
 export default function FormsDashboard(): ReactElement {
   const navigate = useNavigate();
@@ -60,7 +56,6 @@ export default function FormsDashboard(): ReactElement {
   const router = useRouter();
   const currentElectionRoundId = useCurrentElectionRoundStore((s) => s.currentElectionRoundId);
   const { data: electionRound } = useElectionRoundDetails(currentElectionRoundId);
-  const { data: appLanguages } = useLanguages();
 
   const queryParams = useMemo(() => {
     const params = [
@@ -72,14 +67,16 @@ export default function FormsDashboard(): ReactElement {
     return Object.fromEntries(params) as FormsSearchParams;
   }, [searchText, debouncedSearch]);
 
-  const addTranslationsDialog = useAddFormTranslationsDialog();
+  const addTranslationsDialog = useAddTranslationsDialog();
   const editFormAccessDialog = useEditFormAccessDialog();
 
   const confirm = useConfirm();
 
-  const columnHelper = createColumnHelper<NgoFormBase>();
+  const { data: languages } = useLanguages();
 
-  const formColDefs: ColumnDef<NgoFormBase>[] = useMemo(() => {
+  const columnHelper = createColumnHelper<FormBase>();
+
+  const formColDefs: ColumnDef<FormBase>[] = useMemo(() => {
     const defaultColumns = [
       columnHelper.display({
         header: '',
@@ -162,12 +159,29 @@ export default function FormsDashboard(): ReactElement {
           const form = row.original;
 
           return row.depth === 0 ? (
-            <FormStatusBadge status={form.status} />
+            <Badge
+              className={cn({
+                'text-slate-700 bg-slate-200': form.status === FormStatus.Drafted,
+                'text-green-600 bg-green-200': form.status === FormStatus.Published,
+                'text-yellow-600 bg-yellow-200': form.status === FormStatus.Obsolete,
+              })}>
+              {form.status}
+            </Badge>
           ) : (
-            <FormTranslationStatusBadge
-              translationStatus={form.languagesTranslationStatus}
-              defaultLanguage={form.defaultLanguage}
-            />
+            <Badge
+              className={cn({
+                'text-green-600 bg-green-200':
+                  form.languagesTranslationStatus[form.defaultLanguage] === ZTranslationStatus.enum.Translated,
+                'text-yellow-600 bg-yellow-200':
+                  form.languagesTranslationStatus[form.defaultLanguage] === ZTranslationStatus.enum.MissingTranslations,
+                'text-slate-700 bg-slate-200': form.languagesTranslationStatus[form.defaultLanguage] === undefined,
+              })}>
+              {form.languagesTranslationStatus[form.defaultLanguage] === ZTranslationStatus.enum.Translated
+                ? 'Translated'
+                : form.languagesTranslationStatus[form.defaultLanguage] === ZTranslationStatus.enum.MissingTranslations
+                ? 'Missing translation'
+                : 'Unknown'}
+            </Badge>
           );
         },
       }),
@@ -259,7 +273,7 @@ export default function FormsDashboard(): ReactElement {
                   </Tooltip>
                 </TooltipProvider>
               ) : (
-                <>{row.original.formType === FormType.CitizenReporting ? 'Citizens' : 'None'}</>
+                <>{row.original.formType === ZFormType.Enum.CitizenReporting ? 'Citizens' : 'None'}</>
               )
             ) : null,
         })
@@ -308,16 +322,7 @@ export default function FormsDashboard(): ReactElement {
                   disabled={
                     row.original.status !== FormStatus.Drafted || electionRound?.status === ElectionRoundStatus.Archived
                   }
-                  onClick={() =>
-                    addTranslationsDialog.trigger(row.original.id, row.original.languages, (formId, newLanguages) =>
-                      addTranslationsMutation.mutate({
-                        electionRoundId: currentElectionRoundId,
-                        formId,
-                        newLanguages,
-                        originalLanguages: row.original.languages,
-                      })
-                    )
-                  }>
+                  onClick={() => addTranslationsDialog.trigger(row.original.id, row.original.languages)}>
                   Add translations
                 </DropdownMenuItem>
               ) : null}
@@ -380,7 +385,7 @@ export default function FormsDashboard(): ReactElement {
                   disabled={electionRound?.status === ElectionRoundStatus.Archived}
                   onClick={async () => {
                     const languageCode = row.original.defaultLanguage;
-                    const language = appLanguages?.find((l) => languageCode === l.code);
+                    const language = languages?.find((l) => languageCode === l.code);
                     const fullName = language ? `${language.name} / ${language.nativeName}` : '';
 
                     if (
@@ -452,16 +457,7 @@ export default function FormsDashboard(): ReactElement {
                       electionRound?.status === ElectionRoundStatus.Archived ||
                       row.original.status !== FormStatus.Drafted
                     }
-                    onClick={() =>
-                      addTranslationsDialog.trigger(row.original.id, row.original.languages, (formId, newLanguages) =>
-                        addTranslationsMutation.mutate({
-                          electionRoundId: currentElectionRoundId,
-                          formId,
-                          newLanguages,
-                          originalLanguages: row.original.languages,
-                        })
-                      )
-                    }>
+                    onClick={() => addTranslationsDialog.trigger(row.original.id, row.original.languages)}>
                     Add translations
                   </DropdownMenuItem>
                 ) : null}
@@ -523,7 +519,7 @@ export default function FormsDashboard(): ReactElement {
                     disabled={!row.original.isFormOwner}
                     onClick={async () => {
                       const languageCode = row.original.defaultLanguage;
-                      const language = appLanguages?.find((l) => languageCode === l.code);
+                      const language = languages?.find((l) => languageCode === l.code);
                       const fullName = language ? `${language.name} / ${language.nativeName}` : '';
 
                       if (
@@ -561,15 +557,15 @@ export default function FormsDashboard(): ReactElement {
     setSearchText(ev.currentTarget.value);
   };
 
-  const handleObsoleteForm = (form: NgoFormBase) => {
+  const handleObsoleteForm = (form: FormBase) => {
     obsoleteFormMutation.mutate({ electionRoundId: currentElectionRoundId, formId: form.id });
   };
 
-  const handlePublishForm = (form: NgoFormBase) => {
+  const handlePublishForm = (form: FormBase) => {
     publishFormMutation.mutate({ electionRoundId: currentElectionRoundId, formId: form.id });
   };
 
-  const handleDuplicateForm = (form: NgoFormBase) => {
+  const handleDuplicateForm = (form: FormBase) => {
     duplicateFormMutation.mutate({ electionRoundId: currentElectionRoundId, formId: form.id });
   };
 
@@ -605,63 +601,6 @@ export default function FormsDashboard(): ReactElement {
       });
 
       queryClient.invalidateQueries({ queryKey: formsKeys.all(electionRoundId) });
-      router.invalidate();
-    },
-  });
-
-  function getTitle(newLanguages: string[]): string {
-    const languagesLabels =
-      appLanguages?.filter((l) => newLanguages.includes(l.code)).map((l) => `${l.name} / ${l.nativeName}`) ?? [];
-
-    if (languagesLabels.length === 0) return '';
-    if (languagesLabels.length === 1) return languagesLabels[0] + ' added';
-
-    const lastLanguage = languagesLabels.pop(); // Remove the last language from the array
-    return languagesLabels.join(', ') + ' and ' + lastLanguage + ' added';
-  }
-
-  const addTranslationsMutation = useMutation({
-    mutationFn: ({
-      electionRoundId,
-      formId,
-      newLanguages,
-      originalLanguages,
-    }: {
-      electionRoundId: string;
-      formId: string;
-      newLanguages: string[];
-      originalLanguages: string[];
-    }) => {
-      return authApi.put<void>(`/election-rounds/${electionRoundId}/forms/${formId}:addTranslations`, {
-        languageCodes: newLanguages,
-      });
-    },
-
-    onSuccess: async (_, { newLanguages, originalLanguages }) => {
-      toast({
-        title: 'Success',
-        description: 'Translations added',
-      });
-
-      addTranslationsDialog.dismiss();
-      const addedLanguages = difference(newLanguages, originalLanguages);
-
-      await confirm({
-        title: getTitle(addedLanguages),
-        body: (
-          <div>
-            {addedLanguages.length} translations were created to be translated into the selected languages{' '}
-            <b>({addedLanguages.join(', ')})</b>. Please note that this is not an automatic translation as you need to
-            manually translate each form in selected languages.
-            <br />
-            <b>You cannot add or delete questions on the translated forms. </b>Any changes you want to make to the
-            questions (deletion or addition of new questions) will be made to the form in the <b>base language</b>, and
-            they will be copied to the translated forms.
-          </div>
-        ),
-        actionButton: 'Ok',
-      });
-      await queryClient.invalidateQueries({ queryKey: formsKeys.all(currentElectionRoundId) });
       router.invalidate();
     },
   });
@@ -762,7 +701,7 @@ export default function FormsDashboard(): ReactElement {
     },
   });
 
-  const getSubrows = (originalRow: NgoFormBase, index: number): undefined | NgoFormBase[] => {
+  const getSubrows = (originalRow: FormBase, index: number): undefined | FormBase[] => {
     if (originalRow.languages.length === 0) return undefined;
 
     // we need to have subrows only for translations
@@ -776,8 +715,7 @@ export default function FormsDashboard(): ReactElement {
       }));
   };
 
-  const getRowClassName = (row: Row<NgoFormBase>): string =>
-    cn({ 'bg-secondary-300 bg-opacity-[.15]': row.depth === 1 });
+  const getRowClassName = (row: Row<FormBase>): string => cn({ 'bg-secondary-300 bg-opacity-[.15]': row.depth === 1 });
 
   return (
     <Card className='w-full pt-0'>
@@ -821,7 +759,7 @@ export default function FormsDashboard(): ReactElement {
           queryParams={queryParams}
           getRowClassName={getRowClassName}
         />
-        <AddFormTranslationsDialog />
+        <AddTranslationsDialog />
         <EditFormAccessDialog />
       </CardContent>
     </Card>

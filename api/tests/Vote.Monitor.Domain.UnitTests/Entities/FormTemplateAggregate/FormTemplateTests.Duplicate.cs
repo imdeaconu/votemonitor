@@ -1,9 +1,7 @@
-﻿using Vote.Monitor.Domain.Entities.FormBase;
-using Vote.Monitor.Domain.Entities.FormTemplateAggregate;
+﻿using Vote.Monitor.Domain.Entities.FormTemplateAggregate;
 using Vote.Monitor.TestUtils.Fakes.Aggregates;
 
 namespace Vote.Monitor.Domain.UnitTests.Entities.FormTemplateAggregate;
-
 public partial class FormTests
 {
     [Fact]
@@ -22,11 +20,10 @@ public partial class FormTests
             new SingleSelectQuestionFaker(languageList: languages).Generate(),
             new MultiSelectQuestionFaker(languageList: languages).Generate()
         ];
-
-        var formTemplate = FormTemplate.Create(FormType.Voting, "code", LanguagesList.RO.Iso1, name, description,
-            languages, null, questions);
+        
+        var formTemplate = FormTemplate.Create(FormType.Voting, "code", LanguagesList.RO.Iso1, name, description, languages, questions);
         formTemplate.Publish();
-
+        
         // Act
         var newFormTemplate = formTemplate.Duplicate();
 
@@ -37,7 +34,7 @@ public partial class FormTests
         newFormTemplate.DefaultLanguage.Should().BeEquivalentTo(formTemplate.DefaultLanguage);
         newFormTemplate.Languages.Should().BeEquivalentTo(formTemplate.Languages);
         newFormTemplate.Questions.Should().BeEquivalentTo(formTemplate.Questions);
-        newFormTemplate.Status.Should().Be(FormStatus.Drafted);
+        newFormTemplate.Status.Should().Be(FormTemplateStatus.Drafted);
         newFormTemplate.FormType.Should().Be(formTemplate.FormType);
     }
 }

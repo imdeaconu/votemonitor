@@ -1,13 +1,11 @@
 ﻿using FluentValidation;
-using Vote.Monitor.Domain.Entities.FormBase;
 using Vote.Monitor.Domain.Entities.FormTemplateAggregate;
 using Vote.Monitor.TestUtils.Fakes.Aggregates;
 
 namespace Vote.Monitor.Domain.UnitTests.Entities.FormTemplateAggregate;
-
 public partial class FormTests
 {
-    [Fact]
+     [Fact]
     public void Clone_ShouldReturnClonedForm_WhenStatusIsPublishedAndLanguagesAreValid()
     {
         // Arrange
@@ -17,7 +15,6 @@ public partial class FormTests
             new TranslatedStringFaker(_languages),
             new TranslatedStringFaker(_languages),
             _languages,
-            icon: null,
             [
                 _textQuestion,
                 _numberQuestion,
@@ -27,13 +24,13 @@ public partial class FormTests
                 _ratingQuestion
             ]);
         template.Publish();
-
+        
         var electionRoundId = Guid.NewGuid();
         var monitoringNgoId = Guid.NewGuid();
 
         // Act
         string[] languages = [LanguagesList.UK.Iso1];
-        var form = template.Clone(electionRoundId, monitoringNgoId, LanguagesList.UK.Iso1, languages);
+        var form = template.Clone(electionRoundId, monitoringNgoId,LanguagesList.UK.Iso1 , languages);
 
         // Assert
         form.Should().NotBeNull();
@@ -58,7 +55,6 @@ public partial class FormTests
             new TranslatedStringFaker(_languages),
             new TranslatedStringFaker(_languages),
             _languages,
-            icon: null,
             [
                 _textQuestion,
                 _numberQuestion,
@@ -89,7 +85,6 @@ public partial class FormTests
             new TranslatedStringFaker(_languages),
             new TranslatedStringFaker(_languages),
             _languages,
-            icon: null,
             [
                 _textQuestion,
                 _numberQuestion,
@@ -102,10 +97,9 @@ public partial class FormTests
 
         var electionRoundId = Guid.NewGuid();
         var monitoringNgoId = Guid.NewGuid();
-
+        
         // Act
-        Action act = () =>
-            template.Clone(electionRoundId, monitoringNgoId, LanguagesList.RM.Iso1, [LanguagesList.RO.Iso1]);
+        Action act = () => template.Clone(electionRoundId, monitoringNgoId, LanguagesList.RM.Iso1, [LanguagesList.RO.Iso1]);
 
         // Assert
         act.Should().Throw<ValidationException>()
@@ -123,7 +117,6 @@ public partial class FormTests
             new TranslatedStringFaker(_languages),
             new TranslatedStringFaker(_languages),
             _languages,
-            icon: null,
             [
                 _textQuestion,
                 _numberQuestion,
@@ -136,14 +129,14 @@ public partial class FormTests
 
         var electionRoundId = Guid.NewGuid();
         var monitoringNgoId = Guid.NewGuid();
-
+        
         // Act
-        Action act = () =>
-            template.Clone(electionRoundId, monitoringNgoId, LanguagesList.RO.Iso1, [LanguagesList.RM.Iso1]);
+        Action act = () => template.Clone(electionRoundId, monitoringNgoId, LanguagesList.RO.Iso1, [LanguagesList.RM.Iso1]);
 
         // Assert
         act.Should().Throw<ValidationException>()
             .WithMessage("*Language is not supported*")
             .Where(e => e.Errors.Any(f => f.PropertyName == "languages.RM"));
     }
+
 }

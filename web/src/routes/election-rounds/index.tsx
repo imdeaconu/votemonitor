@@ -1,19 +1,36 @@
-import { ElectionRoundStatus } from '@/common/types'
-import ElectionRoundsDashboard from '@/features/election-rounds/components/Dashboard/Dashboard'
-import { redirectIfNotAuth } from '@/lib/utils'
-import { createFileRoute } from '@tanstack/react-router'
-import { z } from 'zod'
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { electionRoundColDefs } from '@/features/election-round/models/ElectionRound';
+import { QueryParamsDataTable } from '@/components/ui/DataTable/QueryParamsDataTable';
+import Layout from '@/components/layout/Layout';
+import { useCallback, type ReactElement } from 'react';
+import CreateElectionRound from '@/features/election-round/components/CreateElectionRound';
+import { useElectionRounds } from '@/features/election-round/queries';
+import { redirectIfNotAuth } from '@/lib/utils';
 
-const electionRoundsDashboardRouteSearchSchema = z.object({
-  searchText: z.string().catch(''),
-  electionRoundStatus: z.nativeEnum(ElectionRoundStatus).optional(),
-  countryId: z.string().optional(),
-})
+function ElectionRounds(): ReactElement {
+  const navigate = useNavigate();
+
+  const navigateToElectionRound = useCallback(
+    (electionRoundId: string) => {
+      void navigate({ to: '/election-rounds/$electionRoundId', params: { electionRoundId } });
+    },
+    [navigate]
+  );
+
+  return (
+    <Layout title={'Election Rounds'} actions={<CreateElectionRound />}>
+      <QueryParamsDataTable
+        columns={electionRoundColDefs}
+        useQuery={useElectionRounds}
+        onRowClick={navigateToElectionRound}
+      />
+    </Layout>
+  );
+}
 
 export const Route = createFileRoute('/election-rounds/')({
-  component: ElectionRoundsDashboard,
-  validateSearch: electionRoundsDashboardRouteSearchSchema,
+  component: ElectionRounds,
   beforeLoad: () => {
-    redirectIfNotAuth()
+    redirectIfNotAuth();
   },
-})
+});

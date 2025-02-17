@@ -20,7 +20,7 @@ export function CitizenReportsFiltersByEntry(): FunctionComponent {
 
   const navigateHandler = useCallback(
     (search: Record<string, string | undefined>) => {
-      navigate({
+      void navigate({
         // @ts-ignore
         search: (prev) => {
           const newSearch: Record<string, string | undefined | string[] | number | Date> = {

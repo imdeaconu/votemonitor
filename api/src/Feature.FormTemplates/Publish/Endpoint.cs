@@ -1,5 +1,4 @@
-﻿using Vote.Monitor.Domain.Entities.FormBase;
-using Vote.Monitor.Domain.Entities.FormTemplateAggregate;
+﻿using Vote.Monitor.Domain.Entities.FormTemplateAggregate;
 
 namespace Feature.FormTemplates.Publish;
 
@@ -23,7 +22,7 @@ public class Endpoint(IRepository<FormTemplate> repository) : Endpoint<Request, 
 
         var result = formTemplate.Publish();
 
-        if (result is PublishFormResult.Error validationResult)
+        if (result is PublishResult.InvalidFormTemplate validationResult)
         {
             validationResult.Problems.Errors.ForEach(AddError);
             return new ProblemDetails(ValidationFailures);

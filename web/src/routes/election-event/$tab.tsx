@@ -1,5 +1,6 @@
-import { FormStatus, FormType } from '@/common/types';
+import { ZFormType } from '@/common/types';
 import ElectionEventDashboard from '@/features/election-event/components/Dashboard/Dashboard';
+import { FormStatus } from '@/features/forms/models/form';
 import { redirectIfNotAuth } from '@/lib/utils';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -17,8 +18,7 @@ const coerceTabSlug = (slug: string) => {
 };
 
 export const FormsSearchParamsSchema = z.object({
-  searchText: z.string().optional(),
-  formTypeFilter: z.nativeEnum(FormType).optional().catch(FormType.Opening),
+  formTypeFilter: ZFormType.optional().catch('Opening'),
   formStatusFilter: z.nativeEnum(FormStatus).optional().catch(FormStatus.Published),
 });
 export type FormsSearchParams = z.infer<typeof FormsSearchParamsSchema>;
@@ -26,15 +26,7 @@ export type FormsSearchParams = z.infer<typeof FormsSearchParamsSchema>;
 export const ElectionEventPageSearchParamsSchema = FormsSearchParamsSchema.merge(
   z.object({
     tab: z
-      .enum([
-        'event-details',
-        'polling-stations',
-        'observer-guides',
-        'observer-forms',
-        'locations',
-        'citizen-guides',
-        'citizen-notifications',
-      ])
+      .enum(['event-details', 'polling-stations', 'observer-guides', 'observer-forms', 'locations', 'citizen-guides', 'citizen-notifications'])
       .catch('event-details')
       .optional(),
   })

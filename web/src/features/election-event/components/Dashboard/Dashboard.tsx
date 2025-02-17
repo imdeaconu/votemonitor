@@ -2,18 +2,19 @@ import Layout from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCurrentElectionRoundStore } from '@/context/election-round.store';
 import FormsDashboard from '@/features/forms/components/Dashboard/Dashboard';
-import LocationsDashboard from '@/components/LocationsDashboard/LocationsDashboard';
+import LocationsDashboard from '@/features/locations/components/Dashboard/Dashboard';
+import PollingStationsDashboard from '@/features/polling-stations/components/Dashboard/Dashboard';
 import { cn } from '@/lib/utils';
 import { getRouteApi, useNavigate } from '@tanstack/react-router';
 import { ReactElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useElectionRoundDetails } from '../../hooks/election-event-hooks';
 import GuidesDashboard from '../Guides/GuidesDashboard';
-import ElectionEventDescription from '../../../../components/ElectionEventDescription/ElectionEventDescription';
+import ElectionEventDetails from '../ElectionEventDetails/ElectionEventDetails';
 import { GuidePageType } from '../../models/guide';
 import CitizenNotificationsDashboard from '@/features/CitizenNotifications/CitizenNotificationsDashboard/CitizenNotificationsDashboard';
 import { Route } from '@/routes/election-event/$tab';
-import PollingStationsDashboard from '@/components/PollingStationsDashboard/PollingStationsDashboard';
+
 
 export default function ElectionEventDashboard(): ReactElement {
   const { t } = useTranslation();
@@ -26,7 +27,6 @@ export default function ElectionEventDashboard(): ReactElement {
   function handleTabChange(tab: string): void {
     setCurrentTab(tab);
     navigate({
-      // @ts-ignore
       params(prev) {
         return { ...prev, tab };
       },
@@ -59,7 +59,7 @@ export default function ElectionEventDashboard(): ReactElement {
         </TabsList>
 
         <TabsContent value='event-details'>
-          <ElectionEventDescription />
+          <ElectionEventDetails />
         </TabsContent>
 
         <TabsContent value='polling-stations'>

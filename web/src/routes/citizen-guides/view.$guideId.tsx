@@ -20,6 +20,8 @@ function ViewCitizenGuide() {
   const { guideId } = Route.useParams();
 
   return (
+    <div className='p-2'>
       <ViewTextGuide guidePageType={GuidePageType.Citizen} guideId={guideId} />
+    </div>
   );
 }

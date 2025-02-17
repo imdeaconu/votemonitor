@@ -3,8 +3,7 @@ using Vote.Monitor.Domain.Entities.FormTemplateAggregate;
 
 namespace Feature.FormTemplates.Update;
 
-public class Endpoint(IRepository<FormTemplate> repository)
-    : Endpoint<Request, Results<NoContent, NotFound, Conflict<ProblemDetails>>>
+public class Endpoint(IRepository<FormTemplate> repository) : Endpoint<Request, Results<NoContent, NotFound, Conflict<ProblemDetails>>>
 {
     public override void Configure()
     {
@@ -12,8 +11,7 @@ public class Endpoint(IRepository<FormTemplate> repository)
         Policies(PolicyNames.PlatformAdminsOnly);
     }
 
-    public override async Task<Results<NoContent, NotFound, Conflict<ProblemDetails>>> ExecuteAsync(Request req,
-        CancellationToken ct)
+    public override async Task<Results<NoContent, NotFound, Conflict<ProblemDetails>>> ExecuteAsync(Request req, CancellationToken ct)
     {
         var formTemplate = await repository.GetByIdAsync(req.Id, ct);
 
@@ -32,10 +30,9 @@ public class Endpoint(IRepository<FormTemplate> repository)
         }
 
         var questions = req.Questions.Select(QuestionsMapper.ToEntity)
-            .ToList()
-            .AsReadOnly();
-        formTemplate.UpdateDetails(req.Code, req.Name, req.Description, req.FormType, req.DefaultLanguage,
-            req.Languages, req.Icon, questions);
+                 .ToList()
+                 .AsReadOnly();
+        formTemplate.UpdateDetails(req.Code, req.DefaultLanguage, req.Name,  req.Description, req.FormType, req.Languages, questions);
 
         await repository.UpdateAsync(formTemplate, ct);
         return TypedResults.NoContent();

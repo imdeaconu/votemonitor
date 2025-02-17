@@ -1,5 +1,4 @@
-﻿using Authorization.Policies;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Vote.Monitor.Api.Feature.NgoAdmin.Specifications;
 using Vote.Monitor.Core.Extensions;
 
@@ -14,11 +13,9 @@ public class Endpoint(
         Put("/api/ngos/{ngoId}/admins/{id}");
         DontAutoTag();
         Options(x => x.WithTags("ngo-admins"));
-        Policies(PolicyNames.PlatformAdminsOnly);
     }
 
-    public override async Task<Results<NoContent, NotFound, ValidationProblem>> ExecuteAsync(Request req,
-        CancellationToken ct)
+    public override async Task<Results<NoContent, NotFound, ValidationProblem>> ExecuteAsync(Request req, CancellationToken ct)
     {
         var specification = new GetNgoAdminByIdSpecification(req.NgoId, req.Id);
         var ngoAdmin = await repository.SingleOrDefaultAsync(specification, ct);
@@ -29,7 +26,6 @@ public class Endpoint(
         }
 
         ngoAdmin.ApplicationUser.UpdateDetails(req.FirstName, req.LastName, req.PhoneNumber);
-        ngoAdmin.ApplicationUser.UpdateStatus(req.Status);
         var result = await userManager.UpdateAsync(ngoAdmin.ApplicationUser);
 
         if (!result.Succeeded)

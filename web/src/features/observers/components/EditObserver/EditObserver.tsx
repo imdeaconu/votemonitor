@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { observerDetailsQueryOptions } from '@/routes/observers/$observerId';
 import { Route } from '@/routes/observers_.$observerId.edit';
@@ -21,23 +22,23 @@ export default function EditObserver() {
   const observer = observerQuery.data;
 
   const editObserverFormSchema = z.object({
-    lastName: z.string().min(1, {
-      message: 'Last name must be at least 1 characters long',
+    name: z.string().min(2, {
+      message: 'This field is mandatory',
     }),
-    firstName: z.string().min(1, {
-      message: 'First name must be at least 1 characters long',
-    }),
-    email: z.string().min(1, { message: 'Email is required' }).email('Please enter a valid email address'),
-    phoneNumber: z.string(),
+    login: z.string().min(1, { message: 'This field is mandatory' }).email('Email is not valid'),
+    phoneNumber: z
+      .string()
+      .min(1, { message: 'This field is required' }),
+    status: z.string(),
   });
 
   const form = useForm<z.infer<typeof editObserverFormSchema>>({
     resolver: zodResolver(editObserverFormSchema),
     defaultValues: {
-      firstName: observer.firstName,
-      lastName: observer.lastName,
-      email: observer.email,
+      name: observer.name,
+      login: observer.email,
       phoneNumber: observer.phoneNumber,
+      status: observer.status,
     },
   });
 
@@ -68,7 +69,7 @@ export default function EditObserver() {
   };
 
   return (
-    <Layout title={`Edit ${observer.firstName + ' ' + observer.lastName}`}>
+    <Layout title={`Edit ${observer.name}`}>
       <Card className='w-[800px] pt-0'>
         <CardHeader className='flex flex-column gap-2'>
           <div className='flex flex-row justify-between items-center'>
@@ -81,14 +82,14 @@ export default function EditObserver() {
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
               <FormField
                 control={form.control}
-                name='firstName'
-                render={({ field, fieldState }) => (
+                name='name'
+                render={({ field }) => (
                   <FormItem className='w-[540px]'>
                     <FormLabel>
                       Name <span className='text-red-500'>*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder='First name' {...field} {...fieldState} />
+                      <Input placeholder='Name' {...field} />
                     </FormControl>
                     <FormMessage className='mt-2' />
                   </FormItem>
@@ -96,29 +97,14 @@ export default function EditObserver() {
               />
               <FormField
                 control={form.control}
-                name='lastName'
-                render={({ field, fieldState }) => (
-                  <FormItem className='w-[540px]'>
-                    <FormLabel>
-                      Name <span className='text-red-500'>*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder='Last name' {...field} {...fieldState} />
-                    </FormControl>
-                    <FormMessage className='mt-2' />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='email'
-                render={({ field, fieldState }) => (
+                name='login'
+                render={({ field }) => (
                   <FormItem className='w-[540px]'>
                     <FormLabel>
                       Email <span className='text-red-500'>*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder='Email address' {...field} {...fieldState} type='email' />
+                      <Input placeholder='Email address' {...field} />
                     </FormControl>
                     <FormMessage className='mt-2' />
                   </FormItem>
@@ -127,19 +113,43 @@ export default function EditObserver() {
               <FormField
                 control={form.control}
                 name='phoneNumber'
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                   <FormItem className='w-[540px]'>
                     <FormLabel>
                       Phone number <span className='text-red-500'>*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder='Phone number' {...field} {...fieldState} />
+                      <Input placeholder='Phone number' {...field} />
                     </FormControl>
                     <FormMessage className='mt-2' />
                   </FormItem>
                 )}
               />
-
+              <FormField
+                control={form.control}
+                name='status'
+                render={({ field }) => (
+                  <FormItem className='w-[540px]'>
+                    <FormLabel>
+                      Status <span className='text-red-500'>*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Observer status' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value='Active'>Active</SelectItem>
+                            <SelectItem value='Suspended'>Suspended</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage className='mt-2' />
+                  </FormItem>
+                )}
+              />
               <div className='flex justify-between'>
                 <Button
                   onClick={handleDelete}

@@ -12,14 +12,11 @@ namespace Vote.Monitor.Domain.Entities.PollingStationInfoFormAggregate;
 
 public class PollingStationInformationForm : BaseForm
 {
-    public Guid ElectionRoundId { get; private set; }
-    public ElectionRound ElectionRound { get; private set; }
-    
     private PollingStationInformationForm(
         ElectionRound electionRound,
         string defaultLanguage,
         IEnumerable<string> languages,
-        IEnumerable<BaseQuestion> questions) : base(
+        IEnumerable<BaseQuestion> questions) : base(electionRound,
         FormType.PSI,
         "PSI",
         TranslatedString.New(languages, "PSI"),
@@ -28,10 +25,9 @@ public class PollingStationInformationForm : BaseForm
         languages,
         null,
         questions,
-        FormStatus.Published)
+        FormStatus.Published,
+        displayOrder: 0)
     {
-        ElectionRound = electionRound;
-        ElectionRoundId = electionRound.Id;
     }
 
     private PollingStationInformationForm(
@@ -80,26 +76,10 @@ public class PollingStationInformationForm : BaseForm
             arrivalTime,
             departureTime, answers, numberOfQuestionsAnswered, numberOfFlaggedAnswers, breaks, isCompleted);
     }
-    
-    public override DraftFormResult DraftInternal()
-    {
-        return new DraftFormResult.Drafted();
-    }
-
-    public override ObsoleteFormResult ObsoleteInternal()
-    {
-        return new ObsoleteFormResult.Obsoleted();
-    }
-
-    public override PublishFormResult PublishInternal()
-    {
-        return new PublishFormResult.Published();
-    }
 
 #pragma warning disable CS8618 // Required by Entity Framework
     private PollingStationInformationForm() : base()
     {
     }
 #pragma warning restore CS8618
-   
 }

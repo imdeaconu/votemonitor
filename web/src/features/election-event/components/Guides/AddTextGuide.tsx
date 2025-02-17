@@ -38,7 +38,7 @@ export default function AddTextGuide({ guidePageType }: AddTextGuideProps): Func
           <AddGuideForm
             guidePageType={guidePageType}
             onSuccess={(guide) =>
-              navigate({
+              void navigate({
                 to:
                   guidePageType === GuidePageType.Observer
                     ? '/observer-guides/edit/$guideId'
@@ -54,7 +54,7 @@ export default function AddTextGuide({ guidePageType }: AddTextGuideProps): Func
                   variant='outline'
                   type='button'
                   onClick={() => {
-                    navigate({
+                    void navigate({
                       to: '/election-event/$tab',
                       params: { tab: guidePageType === GuidePageType.Observer ? 'observer-guides' : 'citizen-guides' },
                     });

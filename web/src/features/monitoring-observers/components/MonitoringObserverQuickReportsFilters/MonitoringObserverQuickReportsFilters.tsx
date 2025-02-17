@@ -5,22 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QuickReportLocationType } from '@/features/responses/models/quick-report';
 import { mapQuickReportFollowUpStatus, mapQuickReportLocationType } from '@/features/responses/utils/helpers';
+import { getRouteApi } from '@tanstack/react-router';
 import { useCallback } from 'react';
 import type { MonitoringObserverDetailsRouteSearch } from '../../models/monitoring-observer';
 
-import { Route } from '@/routes/monitoring-observers/view/$monitoringObserverId.$tab';
+const routeApi = getRouteApi('/monitoring-observers/view/$monitoringObserverId/$tab');
 
 export function MonitoringObserverQuickReportsFilters(): FunctionComponent {
-  const navigate = Route.useNavigate();
-  const search = Route.useSearch();
-  const params = Route.useParams();
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
 
   const onClearFilter = useCallback(
     (filter: keyof MonitoringObserverDetailsRouteSearch | (keyof MonitoringObserverDetailsRouteSearch)[]) => () => {
       const filters = Array.isArray(filter)
         ? Object.fromEntries(filter.map((key) => [key, undefined]))
         : { [filter]: undefined };
-      navigate({ search: (prev) => ({ ...prev, ...filters }) });
+      void navigate({ search: (prev) => ({ ...prev, ...filters }) });
     },
     [navigate]
   );
@@ -29,12 +29,7 @@ export function MonitoringObserverQuickReportsFilters(): FunctionComponent {
     <>
       <Select
         onValueChange={(value) => {
-          navigate({
-            to: '.',
-            replace: true,
-            params,
-            search: (prev: any) => ({ ...prev, quickReportFollowUpStatus: value }),
-          });
+          void navigate({ search: (prev) => ({ ...prev, quickReportFollowUpStatus: value }) });
         }}
         value={search.quickReportFollowUpStatus ?? ''}>
         <SelectTrigger>
@@ -51,14 +46,10 @@ export function MonitoringObserverQuickReportsFilters(): FunctionComponent {
         </SelectContent>
       </Select>
 
+
       <Select
         onValueChange={(value) => {
-          navigate({
-            to: '.',
-            replace: true,
-            params,
-            search: (prev: any) => ({ ...prev, quickReportLocationType: value }),
-          });
+          void navigate({ search: (prev) => ({ ...prev, quickReportLocationType: value }) });
         }}
         value={search.quickReportLocationType ?? ''}>
         <SelectTrigger>
@@ -75,9 +66,10 @@ export function MonitoringObserverQuickReportsFilters(): FunctionComponent {
         </SelectContent>
       </Select>
 
+
       <Select
         onValueChange={(value) => {
-          navigate({ search: (prev) => ({ ...prev, hasFlaggedAnswers: value }) });
+          void navigate({ search: (prev) => ({ ...prev, hasFlaggedAnswers: value }) });
         }}
         value={search.hasFlaggedAnswers?.toString() ?? ''}>
         <SelectTrigger>
@@ -95,7 +87,7 @@ export function MonitoringObserverQuickReportsFilters(): FunctionComponent {
 
       <Button
         onClick={() => {
-          navigate({});
+          void navigate({});
         }}
         variant='ghost-primary'>
         Reset filters
@@ -104,17 +96,11 @@ export function MonitoringObserverQuickReportsFilters(): FunctionComponent {
       {Object.entries(search).length > 0 && (
         <div className='flex flex-wrap gap-2 col-span-full'>
           {search.quickReportFollowUpStatus && (
-            <FilterBadge
-              label={`Form type: ${search.quickReportFollowUpStatus}`}
-              onClear={onClearFilter('quickReportFollowUpStatus')}
-            />
+            <FilterBadge label={`Form type: ${search.quickReportFollowUpStatus}`} onClear={onClearFilter('quickReportFollowUpStatus')} />
           )}
 
           {search.quickReportLocationType && (
-            <FilterBadge
-              label={`Location type: ${search.quickReportLocationType}`}
-              onClear={onClearFilter('quickReportLocationType')}
-            />
+            <FilterBadge label={`Location type: ${search.quickReportLocationType}`} onClear={onClearFilter('quickReportLocationType')} />
           )}
 
           {search.hasFlaggedAnswers && (

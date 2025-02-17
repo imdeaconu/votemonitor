@@ -82,7 +82,7 @@ function PushMessages(): FunctionComponent {
 
   const navigateToPushMessage = useCallback(
     (id: string) => {
-      navigate({ to: '/monitoring-observers/push-messages/$id/view', params: { id } });
+      void navigate({ to: '/monitoring-observers/push-messages/$id/view', params: { id } });
     },
     [navigate]
   );

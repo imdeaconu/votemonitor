@@ -1,12 +1,14 @@
-import FormEdit from '@/features/forms/components/FormEdit/FormEdit';
-import FormNew from '@/features/forms/components/FormNew/FormNew';
+import { FormBuilderScreenScratch } from '@/features/forms/components/FormBuilder/components/FormBuilderScreenScratch';
 import { redirectIfNotAuth } from '@/lib/utils';
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/forms/new_/scratch')({
+export const Route = createFileRoute('/forms/new/scratch')({
   beforeLoad: () => {
     redirectIfNotAuth();
   },
-  component: ()=><FormNew />,
+  component: CreateNewFormFromScratch,
 });
 
+function CreateNewFormFromScratch() {
+  return <FormBuilderScreenScratch />;
+}

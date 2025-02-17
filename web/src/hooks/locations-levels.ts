@@ -1,17 +1,6 @@
 import { authApi } from '@/common/auth-api';
-import type { DataTableParameters, LevelNode } from '@/common/types';
+import type { LevelNode } from '@/common/types';
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
-const STALE_TIME = 1000 * 60 * 5; // five minutes
-
-export const locationsKeys = {
-  all: (electionRoundId: string) => ['locations', electionRoundId] as const,
-  levels: (electionRoundId: string) => [...locationsKeys.all(electionRoundId), 'levels'] as const,
-  lists: (electionRoundId: string) => [...locationsKeys.all(electionRoundId), 'list'] as const,
-  list: (electionRoundId: string, params: DataTableParameters) =>
-    [...locationsKeys.lists(electionRoundId), { ...params }] as const,
-  details: (electionRoundId: string) => [...locationsKeys.all(electionRoundId), 'detail'] as const,
-  detail: (electionRoundId: string, id: string) => [...locationsKeys.details(electionRoundId), id] as const,
-};
 
 type LocationsLevelsResponse = { nodes: LevelNode[] };
 
@@ -19,8 +8,9 @@ type UseLocationsLevelsResult = UseQueryResult<Record<string, LevelNode[]>, Erro
 
 export function useLocationsLevels(electionRoundId: string): UseLocationsLevelsResult {
   return useQuery({
-    queryKey: locationsKeys.levels(electionRoundId),
+    queryKey: ['locations', 'levels'],
     queryFn: async () => {
+
       const response = await authApi.get<LocationsLevelsResponse>(
         `/election-rounds/${electionRoundId}/locations:fetchAll`
       );
@@ -30,7 +20,6 @@ export function useLocationsLevels(electionRoundId: string): UseLocationsLevelsR
         {}
       );
     },
-    enabled: !!electionRoundId,
-    staleTime: STALE_TIME,
+    enabled: !!electionRoundId
   });
 }

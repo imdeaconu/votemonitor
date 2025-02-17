@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using Vote.Monitor.Domain.Entities.FormAnswerBase.Answers;
-using Vote.Monitor.Domain.Entities.FormBase;
 using Vote.Monitor.TestUtils.Fakes.Aggregates;
 using Vote.Monitor.TestUtils.Fakes.Aggregates.Answers;
 
@@ -46,7 +45,7 @@ public class FormAggregateTests
 
         var form = Form.Create(electionRound, monitoringNgo, FormType.ClosingAndCounting, "",
             new TranslatedStringFaker(languages).Generate(), new TranslatedStringFaker(languages).Generate(), "EN",
-            languages, null,  questions);
+            languages, null, displayOrder: 0, questions);
 
         // Act
 
@@ -104,7 +103,7 @@ public class FormAggregateTests
 
         var form = Form.Create(electionRound, monitoringNgo, FormType.ClosingAndCounting, "",
             new TranslatedStringFaker(languages).Generate(), new TranslatedStringFaker(languages).Generate(), "EN",
-            languages, null,  questions);
+            languages, null, displayOrder: 0, questions);
 
         List<BaseAnswer> initialAnswers =
         [
@@ -154,7 +153,7 @@ public class FormAggregateTests
 
         var form = Form.Create(electionRound, monitoringNgo, FormType.ClosingAndCounting, "",
             new TranslatedStringFaker(languages).Generate(), new TranslatedStringFaker(languages).Generate(), "EN",
-            languages, null,  questions);
+            languages, null, displayOrder: 0, questions);
 
         List<BaseAnswer> answers =
         [
@@ -197,7 +196,7 @@ public class FormAggregateTests
 
         var form = Form.Create(electionRound, monitoringNgo, FormType.ClosingAndCounting, "",
             new TranslatedStringFaker(languages).Generate(), new TranslatedStringFaker(languages).Generate(), "EN",
-            ["EN"], null,  questions);
+            ["EN"], null, displayOrder: 0, questions);
 
         List<BaseAnswer> initialAnswers =
         [
@@ -247,7 +246,7 @@ public class FormAggregateTests
 
         var form = Form.Create(electionRound, monitoringNgo, FormType.ClosingAndCounting, "",
             new TranslatedStringFaker(languages).Generate(), new TranslatedStringFaker(languages).Generate(), "EN",
-            languages, null,  questions);
+            languages, null, displayOrder: 0, questions);
 
         List<BaseAnswer> initialAnswers =
         [
@@ -294,7 +293,7 @@ public class FormAggregateTests
 
         var form = Form.Create(electionRound, monitoringNgo, FormType.ClosingAndCounting, "",
             new TranslatedStringFaker(languages).Generate(), new TranslatedStringFaker(languages).Generate(), "EN",
-            ["EN"], null,  questions);
+            ["EN"], null, displayOrder: 0, questions);
         List<BaseAnswer> initialAnswers =
         [
             new SingleSelectAnswerFaker(singleSelectQuestion),
@@ -329,7 +328,7 @@ public class FormAggregateTests
 
         var form = Form.Create(electionRound, monitoringNgo, FormType.ClosingAndCounting, "",
             new TranslatedStringFaker(languages).Generate(), new TranslatedStringFaker(languages).Generate(), "RO",
-            languages, null,  questions!);
+            languages, null, displayOrder: 0, questions!);
 
         // Act
         var submission = form.CreateFormSubmission(pollingStation, monitoringObserver, answers, false);

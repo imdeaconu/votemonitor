@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Vote.Monitor.Domain;
 using Vote.Monitor.Domain.Entities.FormAggregate;
-using Vote.Monitor.Domain.Entities.FormBase;
 
 namespace Feature.Forms.FetchCitizenReportingForms;
 

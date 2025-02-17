@@ -9,8 +9,7 @@ public class Endpoint(IRepository<ElectionRoundAggregate> repository)
         Policies(PolicyNames.PlatformAdminsOnly);
     }
 
-    public override async Task<Results<NoContent, NotFound, Conflict<ProblemDetails>>> ExecuteAsync(Request req,
-        CancellationToken ct)
+    public override async Task<Results<NoContent, NotFound, Conflict<ProblemDetails>>> ExecuteAsync(Request req, CancellationToken ct)
     {
         var electionRound = await repository.GetByIdAsync(req.Id, ct);
 
@@ -19,7 +18,7 @@ public class Endpoint(IRepository<ElectionRoundAggregate> repository)
             return TypedResults.NotFound();
         }
 
-        var specification = new GetActiveElectionRoundSpecification(req.Id, req.CountryId, req.Title);
+        var specification = new GetActiveElectionRoundSpecification(req.CountryId, req.Title);
         var hasElectionRoundWithSameTitle = await repository.AnyAsync(specification, ct);
         if (hasElectionRoundWithSameTitle)
         {

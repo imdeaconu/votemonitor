@@ -19,5 +19,9 @@ export const Route = createFileRoute('/observer-guides/view/$guideId')({
 function ViewObserverGuide() {
   const { guideId } = Route.useParams();
 
-  return <ViewTextGuide guidePageType={GuidePageType.Observer} guideId={guideId} />;
+  return (
+    <div className='p-2'>
+      <ViewTextGuide guidePageType={GuidePageType.Observer} guideId={guideId} />
+    </div>
+  );
 }

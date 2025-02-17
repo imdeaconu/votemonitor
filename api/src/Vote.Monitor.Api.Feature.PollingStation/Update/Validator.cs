@@ -21,6 +21,10 @@ public class Validator : Validator<Request>
             .NotEmpty();
 
         RuleFor(x => x.Tags)
+            .NotEmpty()
+            .NotNull();
+
+        RuleFor(x => x.Tags)
             .Must(filter =>
             {
                 return filter.Keys.All(tag => !string.IsNullOrWhiteSpace(tag));

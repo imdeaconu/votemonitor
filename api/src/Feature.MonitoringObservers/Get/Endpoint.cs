@@ -37,8 +37,6 @@ public class Endpoint(IAuthorizationService authorizationService, INpgsqlConnect
                 SELECT
                     "MonitoringObserverId" AS "Id",
                     "DisplayName",
-                    "FirstName",
-                    "LastName",
                     "PhoneNumber",
                     "Email",
                     "Tags",
@@ -93,8 +91,6 @@ public class Endpoint(IAuthorizationService authorizationService, INpgsqlConnect
         SELECT
             MO."Id",
             MO."DisplayName",
-            MO."FirstName",
-            MO."LastName",
             MO."PhoneNumber",
             MO."Email",
             MO."Tags",
@@ -107,8 +103,6 @@ public class Endpoint(IAuthorizationService authorizationService, INpgsqlConnect
         GROUP BY
             MO."Id",
             MO."DisplayName",
-            MO."FirstName",
-            MO."LastName",
             MO."PhoneNumber",
             MO."Email",
             MO."Tags",
@@ -123,7 +117,7 @@ public class Endpoint(IAuthorizationService authorizationService, INpgsqlConnect
             id = req.Id
         };
 
-        MonitoringObserverModel? monitoringObserver;
+        MonitoringObserverModel monitoringObserver = null;
         using (var dbConnection = await dbConnectionFactory.GetOpenConnectionAsync(ct))
         {
             monitoringObserver = await dbConnection.QuerySingleOrDefaultAsync<MonitoringObserverModel>(sql, queryArgs);

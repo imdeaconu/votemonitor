@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using Vote.Monitor.Domain.Entities.FormBase;
 using Vote.Monitor.Domain.Entities.FormTemplateAggregate;
 using Vote.Monitor.TestUtils.Fakes.Aggregates;
 
@@ -17,7 +16,6 @@ public partial class FormTests
             new TranslatedStringFaker(_languages),
             new TranslatedStringFaker(_languages),
             _languages,
-            icon: null,
             [
                 _textQuestion,
                 _numberQuestion,
@@ -58,7 +56,6 @@ public partial class FormTests
             new TranslatedStringFaker(_languages),
             new TranslatedStringFaker(_languages),
             _languages,
-            icon: null,
             [
                 _textQuestion,
                 _numberQuestion,
@@ -90,7 +87,6 @@ public partial class FormTests
             new TranslatedStringFaker(_languages),
             new TranslatedStringFaker(_languages),
             _languages,
-            icon: null,
             [
                 _textQuestion,
                 _numberQuestion,
@@ -124,7 +120,6 @@ public partial class FormTests
             new TranslatedStringFaker(_languages),
             new TranslatedStringFaker(_languages),
             _languages,
-            icon: null,
             [
                 _textQuestion,
                 _numberQuestion,

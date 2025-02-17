@@ -1,6 +1,4 @@
-﻿using Vote.Monitor.Domain.Entities.FormBase;
-
-namespace Vote.Monitor.Domain.UnitTests.Entities.FormAggregate;
+﻿namespace Vote.Monitor.Domain.UnitTests.Entities.FormAggregate;
 
 public partial class FormTests
 {
@@ -10,10 +8,10 @@ public partial class FormTests
     {
         // Arrange
         var form = Form.Create(Guid.NewGuid(), Guid.NewGuid(), FormType.Voting, "code", _name, _description,
-            LanguagesList.RO.Iso1, _languages, null, []);
+            LanguagesList.RO.Iso1, _languages, null, displayOrder: 0, []);
         // Act
         form.UpdateDetails(form.Code, form.Name, form.Description, form.FormType, form.DefaultLanguage, form.Languages,
-            null, questions);
+            null, displayOrder: 0, questions);
 
         // Assert
         form.LanguagesTranslationStatus.Should().HaveCount(2);

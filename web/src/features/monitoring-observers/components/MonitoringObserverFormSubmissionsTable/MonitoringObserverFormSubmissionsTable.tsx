@@ -47,7 +47,7 @@ export function MonitoringObserverFormSubmissionsTable({
 
   const navigateToFormSubmission = useCallback(
     (submissionId: string) => {
-      navigate({ to: '/responses/form-submissions/$submissionId', params: { submissionId }});
+      void navigate({ to: '/responses/form-submissions/$submissionId', params: { submissionId }});
     },
     [navigate]
   );

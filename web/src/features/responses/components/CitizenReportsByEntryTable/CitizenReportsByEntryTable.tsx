@@ -29,7 +29,7 @@ export function CitizenReportsByEntryTable(props: CitizenReportsByEntryTableProp
 
   const navigateToCitizenReport = useCallback(
     (citizenReportId: string) => {
-      navigate({ to: '/responses/citizen-reports/$citizenReportId', params: { citizenReportId } });
+      void navigate({ to: '/responses/citizen-reports/$citizenReportId', params: { citizenReportId } });
     },
     [navigate]
   );

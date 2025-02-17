@@ -41,14 +41,12 @@ export default function ResponsesDashboard(): ReactElement {
         <Tabs
           defaultValue={tab ?? 'form-answers'}
           onValueChange={(tab) => {
-            navigate({
-              to: '.',
+            void navigate({
               search() {
                 const newSearch = { tab };
                 setPrevSearch(newSearch);
                 return newSearch;
               },
-              replace: true
             });
           }}>
           <TabsList

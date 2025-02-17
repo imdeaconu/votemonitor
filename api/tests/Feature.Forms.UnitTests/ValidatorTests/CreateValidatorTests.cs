@@ -1,6 +1,5 @@
 ﻿using Vote.Monitor.Core.Constants;
 using Vote.Monitor.Domain.Entities.FormAggregate;
-using Vote.Monitor.Domain.Entities.FormBase;
 using Vote.Monitor.Form.Module.Requests;
 using Vote.Monitor.TestUtils.Utils;
 

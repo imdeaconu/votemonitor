@@ -3,7 +3,6 @@ using Feature.IncidentReports.Specifications;
 using Vote.Monitor.Domain.Entities.FormAggregate;
 using Vote.Monitor.Domain.Entities.FormAnswerBase;
 using Vote.Monitor.Domain.Entities.FormAnswerBase.Answers;
-using Vote.Monitor.Domain.Entities.FormBase;
 using Vote.Monitor.Domain.Entities.IncidentReportAggregate;
 using Vote.Monitor.Domain.Entities.MonitoringObserverAggregate;
 

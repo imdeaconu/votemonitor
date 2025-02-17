@@ -1,5 +1,4 @@
-﻿using Authorization.Policies;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Vote.Monitor.Api.Feature.NgoAdmin.Specifications;
 using Vote.Monitor.Core.Extensions;
 
@@ -17,11 +16,9 @@ public class Endpoint(
         Options(x => x.WithTags("ngo-admins"));
         Description(x => x.Accepts<Request>());
         Summary(x => { x.Description = "Deactivates account of a ngo admin"; });
-        Policies(PolicyNames.PlatformAdminsOnly);
     }
 
-    public override async Task<Results<NoContent, NotFound, ValidationProblem>> ExecuteAsync(Request req,
-        CancellationToken ct)
+    public override async Task<Results<NoContent, NotFound, ValidationProblem>> ExecuteAsync(Request req, CancellationToken ct)
     {
         var specification = new GetNgoAdminByIdSpecification(req.NgoId, req.Id);
         var ngoAdmin = await repository.SingleOrDefaultAsync(specification, ct);

@@ -1,5 +1,5 @@
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
-import { formDetailsQueryOptions } from '@/features/forms/queries';
+import { formDetailsQueryOptions, useFormTemplateDetails } from '@/features/forms/queries';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,8 @@ import {
   usePreviewTemplateDialog,
 } from '@/features/forms/hooks';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { FC, ReactNode, useMemo } from 'react';
-import { useformTemplateDetails } from '@/features/form-templates/queries';
-import { FormQuestionsPreview } from '@/components/FormQuestionsPreview/FormQuestionsPreview';
+import { FC, ReactNode } from 'react';
+import { FormQuestions } from '../../FormQuestions';
 
 interface TemplateDetailProps {
   name: string;
@@ -73,7 +72,7 @@ const PreviewFormOrTemplateDialog: FC<PreviewTemplateDialogProps> = (props) => {
 export const PreviewTemplateDialog = () => {
   const { t } = useTranslation('translation', { keyPrefix: 'electionEvent.form.template' });
   const { isOpen, id, languageCode, trigger, dismiss } = usePreviewTemplateDialog();
-  const { data: formTemplate } = useformTemplateDetails(id);
+  const { data } = useFormTemplateDetails(id);
   const { createForm } = useCreateFormFromTemplate();
 
   const onOpenChange = (open: boolean) => {
@@ -81,21 +80,18 @@ export const PreviewTemplateDialog = () => {
     else dismiss();
   };
 
-  const filteredLanguages = useMemo(
-    () => formTemplate?.languages && formTemplate?.languages.filter((language) => language !== languageCode),
-    [formTemplate?.languages, languageCode]
-  );
+  const filteredLanguages = data?.languages && data?.languages.filter((language) => language !== languageCode);
 
   return (
     <PreviewFormOrTemplateDialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title={languageCode ? `Preview ${formTemplate?.name[languageCode]}` : ''}
+      title={languageCode ? `Preview ${data?.name[languageCode]}` : ''}
       details={
         <>
           <TemplateDetail
             name={t('formDescription')}
-            content={formTemplate?.description?.[languageCode]}
+            content={data?.description?.[languageCode]}
             noContentErrorMessage={t('formDescriptionErr')}
           />
           <TemplateDetail
@@ -110,8 +106,8 @@ export const PreviewTemplateDialog = () => {
         </>
       }
       questionsList={
-        <FormQuestionsPreview
-          questions={formTemplate?.questions}
+        <FormQuestions
+          questions={data?.questions}
           languageCode={languageCode}
           title={t('formQuestions')}
           noContentMessage={t('formQuestionsErr')}
@@ -169,7 +165,7 @@ export const PreviewFormReuseDialog = () => {
         </>
       }
       questionsList={
-        <FormQuestionsPreview
+        <FormQuestions
           questions={formData?.questions}
           languageCode={languageCode}
           title={t('formQuestions')}

@@ -60,8 +60,7 @@ export function LocationsFilters(): FunctionComponent {
 
   const navigateHandler = useCallback(
     (search: Record<string, string | undefined>) => {
-      navigate({
-        // @ts-ignore
+      void navigate({
         search: (prev) => {
           const newSearch: Record<string, string | undefined | string[] | number | Date | boolean> = { ...prev, ...search };
           setPrevSearch(newSearch);

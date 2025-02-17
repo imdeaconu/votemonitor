@@ -1,4 +1,6 @@
 using FluentValidation;
+using FluentValidation.Results;
+using Vote.Monitor.Core.Helpers;
 using Vote.Monitor.Core.Models;
 using Vote.Monitor.Domain.Entities.CitizenReportAggregate;
 using Vote.Monitor.Domain.Entities.FormAggregate;
@@ -8,26 +10,32 @@ using Vote.Monitor.Domain.Entities.FormBase.Questions;
 using Vote.Monitor.Domain.Entities.FormSubmissionAggregate;
 using Vote.Monitor.Domain.Entities.IncidentReportAggregate;
 using Vote.Monitor.Domain.Entities.PollingStationInfoAggregate;
+using Form = Vote.Monitor.Domain.Entities.FormAggregate.Form;
+using PublishResult = Vote.Monitor.Domain.Entities.FormAggregate.PublishResult;
 
 namespace Vote.Monitor.Domain.Entities.FormBase;
 
-public abstract class BaseForm : AuditableBaseEntity, IAggregateRoot
+public class BaseForm : AuditableBaseEntity, IAggregateRoot
 {
     public Guid Id { get; private set; }
+    public Guid ElectionRoundId { get; set; }
+    public ElectionRound ElectionRound { get; set; }
     public FormType FormType { get; private set; }
     public string Code { get; private set; }
     public TranslatedString Name { get; private set; }
     public TranslatedString Description { get; private set; }
-    public FormStatus Status { get; protected set; }
+    public FormStatus Status { get; private set; }
     public string DefaultLanguage { get; private set; }
     public string[] Languages { get; private set; } = [];
     public string? Icon { get; private set; }
+    public int DisplayOrder { get; private set; }
     public int NumberOfQuestions { get; private set; }
 
     public LanguagesTranslationStatus LanguagesTranslationStatus { get; private set; } = new();
     public IReadOnlyList<BaseQuestion> Questions { get; private set; } = new List<BaseQuestion>().AsReadOnly();
 
     protected BaseForm(
+        ElectionRound electionRound,
         FormType formType,
         string code,
         TranslatedString name,
@@ -36,9 +44,38 @@ public abstract class BaseForm : AuditableBaseEntity, IAggregateRoot
         IEnumerable<string> languages,
         string? icon,
         IEnumerable<BaseQuestion> questions,
-        FormStatus status)
+        FormStatus status,
+        int displayOrder) : this(electionRound.Id,
+        formType,
+        code,
+        name,
+        description,
+        defaultLanguage,
+        languages,
+        icon,
+        questions,
+        status,
+        displayOrder)
+    {
+        ElectionRound = electionRound;
+        ElectionRoundId = electionRound.Id;
+    }
+
+    protected BaseForm(
+        Guid electionRoundId,
+        FormType formType,
+        string code,
+        TranslatedString name,
+        TranslatedString description,
+        string defaultLanguage,
+        IEnumerable<string> languages,
+        string? icon,
+        IEnumerable<BaseQuestion> questions,
+        FormStatus status,
+        int displayOrder)
     {
         Id = Guid.NewGuid();
+        ElectionRoundId = electionRoundId;
 
         FormType = formType;
         Code = code;
@@ -51,10 +88,12 @@ public abstract class BaseForm : AuditableBaseEntity, IAggregateRoot
         NumberOfQuestions = Questions.Count;
         Icon = icon;
         LanguagesTranslationStatus = ComputeLanguagesTranslationStatus();
+        DisplayOrder = displayOrder;
     }
 
     [JsonConstructor]
     public BaseForm(Guid id,
+        Guid electionRoundId,
         FormType formType,
         string code,
         TranslatedString name,
@@ -64,9 +103,11 @@ public abstract class BaseForm : AuditableBaseEntity, IAggregateRoot
         string[] languages,
         string? icon,
         int numberOfQuestions,
-        LanguagesTranslationStatus languagesTranslationStatus)
+        LanguagesTranslationStatus languagesTranslationStatus,
+        int displayOrder)
     {
         Id = id;
+        ElectionRoundId = electionRoundId;
         FormType = formType;
         Code = code;
         Name = name;
@@ -77,61 +118,33 @@ public abstract class BaseForm : AuditableBaseEntity, IAggregateRoot
         Icon = icon;
         NumberOfQuestions = numberOfQuestions;
         LanguagesTranslationStatus = languagesTranslationStatus;
+        DisplayOrder = displayOrder;
     }
 
-    public DraftFormResult Draft()
+    public PublishResult Publish()
     {
-        var draftInternalResult = DraftInternal();
-        if (draftInternalResult is not DraftFormResult.Drafted)
-        {
-            return draftInternalResult;
-        }
-
-        Status = FormStatus.Drafted;
-        return new DraftFormResult.Drafted();
-
-    }
-
-    public abstract DraftFormResult DraftInternal();
-
-    public ObsoleteFormResult Obsolete()
-    {
-        var obsoleteInternalResult = ObsoleteInternal();
-        if (obsoleteInternalResult is not ObsoleteFormResult.Obsoleted)
-        {
-            return obsoleteInternalResult;
-        }
-
-        Status = FormStatus.Obsolete;
-        return new ObsoleteFormResult.Obsoleted();
-
-    }
-
-    public abstract ObsoleteFormResult ObsoleteInternal();
-
-    public PublishFormResult Publish()
-    {
-        var validator = new BaseFormValidator();
+        var validator = new FormValidator();
         var validationResult = validator.Validate(this);
 
         if (!validationResult.IsValid)
         {
-            return new PublishFormResult.Error(validationResult);
-        }
-
-        var publishInternalResult = PublishInternal();
-        if (publishInternalResult is not PublishFormResult.Published)
-        {
-            return publishInternalResult;
+            return new PublishResult.InvalidForm(validationResult);
         }
 
         Status = FormStatus.Published;
-        return new PublishFormResult.Published();
 
+        return new PublishResult.Published();
     }
 
-    public abstract PublishFormResult PublishInternal();
+    public void Draft()
+    {
+        Status = FormStatus.Drafted;
+    }
 
+    public void Obsolete()
+    {
+        Status = FormStatus.Obsolete;
+    }
 
     public void UpdateDetails(string code,
         TranslatedString name,
@@ -140,6 +153,7 @@ public abstract class BaseForm : AuditableBaseEntity, IAggregateRoot
         string defaultLanguage,
         IEnumerable<string> languages,
         string? icon,
+        int displayOrder,
         IEnumerable<BaseQuestion> questions)
     {
         Code = code;
@@ -151,6 +165,7 @@ public abstract class BaseForm : AuditableBaseEntity, IAggregateRoot
         Questions = questions.ToList().AsReadOnly();
         NumberOfQuestions = Questions.Count;
         Icon = icon;
+        DisplayOrder = displayOrder;
         LanguagesTranslationStatus = ComputeLanguagesTranslationStatus();
     }
 
@@ -282,6 +297,45 @@ public abstract class BaseForm : AuditableBaseEntity, IAggregateRoot
 
         LanguagesTranslationStatus =
             ComputeLanguagesTranslationStatus();
+    }
+
+    public Form Clone(Guid electionRoundId, Guid monitoringNgoId, string defaultLanguage, string[] languages)
+    {
+        if (Status != FormStatus.Published)
+        {
+            throw new ValidationException([
+                new ValidationFailure(nameof(Status), "Form is not published.")
+            ]);
+        }
+
+        if (!Languages.Contains(defaultLanguage))
+        {
+            throw new ValidationException([
+                new ValidationFailure(nameof(defaultLanguage), "Default language is not supported.")
+            ]);
+        }
+
+        foreach (var iso in languages)
+        {
+            if (!Languages.Contains(iso))
+            {
+                throw new ValidationException([
+                    new ValidationFailure(nameof(languages) + $".{iso}", "Language is not supported.")
+                ]);
+            }
+        }
+
+        return Form.Create(electionRoundId,
+            monitoringNgoId,
+            FormType,
+            Code,
+            new TranslatedString(Name).TrimTranslations(languages),
+            new TranslatedString(Description).TrimTranslations(languages),
+            defaultLanguage,
+            languages,
+            null,
+            DisplayOrder,
+            Questions.Select(x => x.DeepClone().TrimTranslations(languages)).ToList());
     }
 
     private LanguagesTranslationStatus ComputeLanguagesTranslationStatus()

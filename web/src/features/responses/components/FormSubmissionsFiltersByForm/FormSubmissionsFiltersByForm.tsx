@@ -1,7 +1,4 @@
-import { useDataSource } from '@/common/data-source-store';
-import { DataSources } from '@/common/types';
 import { PollingStationsFilters } from '@/components/PollingStationsFilters/PollingStationsFilters';
-import { CoalitionMemberFilter } from '@/features/filtering/components/CoalitionMemberFilter';
 import { FilteringContainer } from '@/features/filtering/components/FilteringContainer';
 import { FormSubmissionsFollowUpFilter } from '@/features/filtering/components/FormSubmissionsFollowUpFilter';
 import { FormSubmissionsFormFilter } from '@/features/filtering/components/FormSubmissionsFormFilter';
@@ -14,6 +11,9 @@ import { FC } from 'react';
 import { FormSubmissionsFlaggedAnswersFilter } from '../../../filtering/components/FormSubmissionsFlaggedAnswersFilter';
 import { FormSubmissionsMediaFilesFilter } from '../../../filtering/components/FormSubmissionsMediaFilesFilter';
 import { FormSubmissionsQuestionNotesFilter } from '../../../filtering/components/FormSubmissionsQuestionNotesFilter';
+import { useDataSource } from '@/common/data-source-store';
+import { DataSources } from '@/common/types';
+import { CoalitionMemberFilter } from '@/features/filtering/components/CoalitionMemberFilter';
 
 export const FormSubmissionsFiltersByForm: FC = () => {
   const dataSource = useDataSource();
@@ -28,7 +28,7 @@ export const FormSubmissionsFiltersByForm: FC = () => {
       <FormSubmissionsQuestionsAnsweredFilter />
       <FormSubmissionsQuestionNotesFilter />
       <FormSubmissionsMediaFilesFilter />
-      <MonitoringObserverTagsSelect isUsingAlternativeFilteringKey />
+      <MonitoringObserverTagsSelect isFilteringFormSubmissions />
       <PollingStationsFilters />
       <FormSubmissionsFromDateFilter />
       <FormSubmissionsToDateFilter />

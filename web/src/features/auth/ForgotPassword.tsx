@@ -18,7 +18,7 @@ const formSchema = z.object({
       message: 'Email is mandatory',
     })
     .email({ message: 'Email format is not correct' }),
-});
+})
 
 interface ForgotPasswordRequest {
   email: string;
@@ -28,13 +28,16 @@ function ForgotPassword() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
-    },
+      email: ''
+    }
   });
 
   const forgotPasswordMutation = useMutation({
-    mutationFn: async (obj: ForgotPasswordRequest) => {
-      return await noAuthApi.post<ForgotPasswordRequest>(`auth/forgot-password`, obj);
+    mutationFn: (obj: ForgotPasswordRequest) => {
+      return noAuthApi.post<ForgotPasswordRequest>(
+        `auth/forgot-password`,
+        obj
+      );
     },
 
     onSuccess: () => {
@@ -47,8 +50,8 @@ function ForgotPassword() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     forgotPasswordMutation.mutate({
-      email: values.email,
-    });
+      email: values.email
+    })
   };
 
   return (
@@ -79,6 +82,8 @@ function ForgotPassword() {
                   </FormItem>
                 )}
               />
+
+
             </CardContent>
             <CardFooter>
               <Button type='submit' className='w-full'>

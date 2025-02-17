@@ -96,9 +96,8 @@ export function QuickReportsTab(): FunctionComponent {
       const filters = Array.isArray(filter)
         ? Object.fromEntries(filter.map((key) => [key, undefined]))
         : { [filter]: undefined };
-      navigate({
-        to: '.',
-        search: (prev: any) => {
+      void navigate({
+        search: (prev) => {
           const newSearch = { ...prev, ...filters };
           setPrevSearch(newSearch);
           return newSearch;
@@ -110,7 +109,7 @@ export function QuickReportsTab(): FunctionComponent {
 
   const navigateToQuickReport = useCallback(
     (quickReportId: string) => {
-      navigate({ to: '/responses/quick-reports/$quickReportId', params: { quickReportId } });
+      void navigate({ to: '/responses/quick-reports/$quickReportId', params: { quickReportId } });
     },
     [navigate]
   );
@@ -168,7 +167,7 @@ export function QuickReportsTab(): FunctionComponent {
 
             <Select
               onValueChange={(value) => {
-                navigate({ to: '.', search: (prev: any) => ({ ...prev, quickReportLocationType: value }) });
+                void navigate({ search: (prev) => ({ ...prev, quickReportLocationType: value }) });
               }}
               value={search.quickReportLocationType ?? ''}>
               <SelectTrigger>
@@ -191,10 +190,7 @@ export function QuickReportsTab(): FunctionComponent {
 
             <Select
               onValueChange={(value) => {
-                navigate({
-                  to: '.',
-                  search: (prev: any) => ({ ...prev, quickReportFollowUpStatus: value }),
-                });
+                void navigate({ search: (prev) => ({ ...prev, quickReportFollowUpStatus: value }) });
               }}
               value={search.quickReportFollowUpStatus ?? ''}>
               <SelectTrigger>
@@ -217,7 +213,7 @@ export function QuickReportsTab(): FunctionComponent {
 
             <Select
               onValueChange={(value) => {
-                navigate({ to: '.', search: (prev: any) => ({ ...prev, incidentCategory: value }) });
+                void navigate({ search: (prev) => ({ ...prev, incidentCategory: value }) });
               }}
               value={search.incidentCategory ?? ''}>
               <SelectTrigger>

@@ -1,6 +1,4 @@
 ﻿using FluentValidation;
-using FluentValidation.Results;
-using Vote.Monitor.Core.Helpers;
 using Vote.Monitor.Core.Models;
 using Vote.Monitor.Domain.Entities.CitizenReportAggregate;
 using Vote.Monitor.Domain.Entities.FormAnswerBase;
@@ -17,11 +15,8 @@ namespace Vote.Monitor.Domain.Entities.FormAggregate;
 
 public class Form : BaseForm
 {
-    public Guid MonitoringNgoId { get; private set; }
-    public MonitoringNgo MonitoringNgo { get; private set; }
-    public Guid ElectionRoundId { get; private set; }
-    public ElectionRound ElectionRound { get; private set; }
-    public int DisplayOrder { get; private set; }
+    public Guid MonitoringNgoId { get; set; }
+    public MonitoringNgo MonitoringNgo { get; set; }
 
     private Form(
         ElectionRound electionRound,
@@ -33,7 +28,8 @@ public class Form : BaseForm
         string defaultLanguage,
         IEnumerable<string> languages,
         string? icon,
-        IEnumerable<BaseQuestion> questions) : base(
+        int displayOrder,
+        IEnumerable<BaseQuestion> questions) : base(electionRound,
         formType,
         code,
         name,
@@ -42,12 +38,11 @@ public class Form : BaseForm
         languages,
         icon,
         questions,
-        FormStatus.Drafted)
+        FormStatus.Drafted,
+        displayOrder)
     {
         MonitoringNgoId = monitoringNgo.Id;
         MonitoringNgo = monitoringNgo;
-        ElectionRoundId = electionRound.Id;
-        ElectionRound = electionRound;
     }
 
     private Form(
@@ -60,7 +55,9 @@ public class Form : BaseForm
         string defaultLanguage,
         IEnumerable<string> languages,
         string? icon,
+        int displayOrder,
         IEnumerable<BaseQuestion> questions) : base(
+        electionRoundId,
         formType,
         code,
         name,
@@ -69,10 +66,10 @@ public class Form : BaseForm
         languages,
         icon,
         questions,
-        FormStatus.Drafted)
+        FormStatus.Drafted,
+        displayOrder)
     {
         MonitoringNgoId = monitoringNgoId;
-        ElectionRoundId = electionRoundId;
     }
 
     [JsonConstructor]
@@ -90,6 +87,7 @@ public class Form : BaseForm
         int numberOfQuestions,
         LanguagesTranslationStatus languagesTranslationStatus,
         int displayOrder) : base(id,
+        electionRoundId,
         formType,
         code,
         name,
@@ -99,11 +97,10 @@ public class Form : BaseForm
         languages,
         icon,
         numberOfQuestions,
-        languagesTranslationStatus)
+        languagesTranslationStatus,
+        displayOrder)
     {
         MonitoringNgoId = monitoringNgoId;
-        ElectionRoundId = electionRoundId;
-        DisplayOrder = displayOrder;
     }
 
     public static Form Create(
@@ -116,9 +113,10 @@ public class Form : BaseForm
         string defaultLanguage,
         IEnumerable<string> languages,
         string? icon,
+        int displayOrder,
         IEnumerable<BaseQuestion> questions) =>
         new(electionRound, monitoringNgo, formType, code, name, description, defaultLanguage, languages, icon,
-            questions);
+            displayOrder, questions);
 
     public static Form Create(
         Guid electionRoundId,
@@ -130,13 +128,14 @@ public class Form : BaseForm
         string defaultLanguage,
         IEnumerable<string> languages,
         string? icon,
+        int displayOrder,
         IEnumerable<BaseQuestion> questions) =>
         new(electionRoundId, monitoringNgoId, formType, code, name, description, defaultLanguage, languages, icon,
-            questions);
+            displayOrder, questions);
 
     public Form Duplicate() =>
         new(ElectionRoundId, MonitoringNgoId, FormType, Code, Name, Description, DefaultLanguage, Languages, Icon,
-            Questions);
+            DisplayOrder, Questions);
 
     public FormSubmission CreateFormSubmission(
         PollingStation pollingStation,
@@ -202,59 +201,6 @@ public class Form : BaseForm
             pollingStationId,
             locationDescription, Id, answers,
             numberOfQuestionAnswered, numberOfFlaggedAnswers, isCompleted);
-    }
-
-    public override DraftFormResult DraftInternal()
-    {
-        return new DraftFormResult.Drafted();
-    }
-
-    public override ObsoleteFormResult ObsoleteInternal()
-    {
-        return new ObsoleteFormResult.Obsoleted();
-    }
-
-    public override PublishFormResult PublishInternal()
-    {
-        return new PublishFormResult.Published();
-    }
-
-    public Form Clone(Guid electionRoundId, Guid monitoringNgoId, string defaultLanguage, string[] languages)
-    {
-        if (Status != FormStatus.Published)
-        {
-            throw new ValidationException([
-                new ValidationFailure(nameof(Status), "Form template is not published.")
-            ]);
-        }
-
-        if (!Languages.Contains(defaultLanguage))
-        {
-            throw new ValidationException([
-                new ValidationFailure(nameof(defaultLanguage), "Default language is not supported.")
-            ]);
-        }
-
-        foreach (var iso in languages)
-        {
-            if (!Languages.Contains(iso))
-            {
-                throw new ValidationException([
-                    new ValidationFailure(nameof(languages) + $".{iso}", "Language is not supported.")
-                ]);
-            }
-        }
-
-        return Form.Create(electionRoundId,
-            monitoringNgoId,
-            FormType,
-            Code,
-            new TranslatedString(Name).TrimTranslations(languages),
-            new TranslatedString(Description).TrimTranslations(languages),
-            defaultLanguage,
-            languages,
-            null,
-            Questions.Select(x => x.DeepClone().TrimTranslations(languages)).ToList());
     }
 
 
