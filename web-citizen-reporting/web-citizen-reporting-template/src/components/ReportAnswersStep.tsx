@@ -30,7 +30,8 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { useFormDisplayLogic } from "@/features/forms/hooks/useDisplayLogic";
+import { currentFormLanguageAtom } from "@/features/forms/atoms";
+import { FormQuestion } from "@/features/forms/components/FormQuestion";
 import { useUploadFile } from "@/hooks/use-upload-file";
 import {
   cn,
@@ -42,8 +43,9 @@ import {
 } from "@/lib/utils";
 import { Route } from "@/routes/forms/$formId";
 import { format } from "date-fns";
+import { useAtom } from "jotai";
 import { CalendarIcon } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { NumberInput } from "./ui/number-input";
 import {
@@ -90,33 +92,19 @@ function ReportAnswersStep() {
   });
 
   const citizenReportForm = Route.useLoaderData();
-  const { shouldDisplayQuestion } = useFormDisplayLogic(
-    citizenReportForm.questions
-  );
+  const shouldDisplayQuestion = () => true;
 
   const form = useFormContext();
 
   const formValues = form.watch();
 
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(
-    citizenReportForm.defaultLanguage
+  const [selectedLanguage, setSelectedLanguage] = useAtom(
+    currentFormLanguageAtom
   );
 
   useEffect(() => {
-    const dirtyFieldsSet = new Set(Object.keys(form.formState.dirtyFields));
-    citizenReportForm.questions.forEach((question) => {
-      // do not reset if the user typed anything in that field
-      if (dirtyFieldsSet.has(`question-${question.id}`)) return;
-
-      if (isMultiSelectQuestion(question)) {
-        form.setValue(`question-${question.id}.selection`, []);
-      }
-
-      if (isTextQuestion(question) || isNumberQuestion(question)) {
-        form.setValue(`question-${question.id}`, "");
-      }
-    });
-  }, [form.setValue, form.formState.dirtyFields, citizenReportForm]);
+    console.log(formValues);
+  }, [formValues]);
 
   const questionHasFreeTextOption = useCallback(
     (question: SingleSelectQuestion | MultiSelectQuestion) => {
@@ -154,6 +142,47 @@ function ReportAnswersStep() {
     console.log("submit");
   }
 
+  if (1 == 1)
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex justify-between mb-4">
+            <div>{citizenReportForm.name[selectedLanguage]}</div>
+
+            <div className="flex flex-row gap-2 items-center">
+              <div className="p-1 mb-1">Language:</div>
+              <Select
+                onValueChange={setSelectedLanguage}
+                defaultValue={selectedLanguage}
+                value={selectedLanguage}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {citizenReportForm.languages.map((language) => (
+                      <SelectItem key={language} value={language}>
+                        {language}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardTitle>
+          <CardDescription>
+            {citizenReportForm.description[selectedLanguage]}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="flex flex-col gap-8">
+          {citizenReportForm.questions.map((question) => (
+            <FormQuestion question={question} />
+          ))}
+        </CardContent>
+      </Card>
+    );
   return (
     <Card>
       <CardHeader>
