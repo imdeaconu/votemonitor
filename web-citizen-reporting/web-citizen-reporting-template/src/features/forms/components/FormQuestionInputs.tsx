@@ -5,6 +5,8 @@ import {
   type MultiSelectQuestion,
   type NumberAnswer,
   type RatingAnswer,
+  type SelectedOption,
+  type SelectOption,
   type SingleSelectAnswer,
   type SingleSelectQuestion,
   type TextAnswer,
@@ -20,7 +22,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { Control } from "react-hook-form";
+import { Textarea } from "@/components/ui/textarea";
+import { useMemo } from "react";
+import { useWatch, type Control } from "react-hook-form";
 const mapFormDataToAnswer = (
   questionType: QuestionType,
   questionId: string,
@@ -78,6 +82,74 @@ const mapFormDataToAnswer = (
       return value;
       break;
   }
+};
+
+const addOptionToMultiSelectAnswer = (
+  questionId: string,
+  currentValue: MultiSelectAnswer,
+  option: SelectedOption
+) => {
+  let selections = currentValue?.selection ?? [];
+  selections = [...selections, option];
+  const multiselectAnswer: MultiSelectAnswer = {
+    $answerType: AnswerType.MultiSelectAnswerType,
+    questionId,
+    selection: selections,
+  };
+  return multiselectAnswer;
+};
+
+const removeSelectionFromMultiSelectAnswer = (
+  questionId: string,
+  currentValue: MultiSelectAnswer,
+  optionId: string
+) => {
+  let selections = currentValue?.selection ?? [];
+  const filteredSelections = selections.filter(
+    (selected) => (selected as unknown as SelectOption).id !== optionId
+  );
+
+  const multiselectAnswer: MultiSelectAnswer = {
+    $answerType: AnswerType.MultiSelectAnswerType,
+    questionId,
+    selection: filteredSelections,
+  };
+  return multiselectAnswer;
+};
+
+export const FormQuestionFreeTextInput = ({
+  control,
+  questionId,
+  freeTextOption,
+  language,
+}: {
+  control: Control<any>;
+  questionId: string;
+  freeTextOption: SelectOption;
+  language: string;
+}) => {
+  return (
+    <FormField
+      control={control}
+      name={`question-${questionId}.${freeTextOption.id}`}
+      rules={{
+        required: true,
+        validate: (value: NumberAnswer | undefined) =>
+          value?.value !== undefined,
+      }}
+      render={({ field }) => (
+        <FormItem>
+          <FormControl>
+            <Textarea
+              {...field}
+              placeholder={freeTextOption.text?.[language]}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
 };
 
 export const FormQuestionNumberInput = ({
@@ -222,51 +294,69 @@ export const FormQuestionMultiSelectInput = ({
   question: MultiSelectQuestion;
   language: string;
 }) => {
+  const fieldName = `question-${question.id}`;
+  const fieldValue = useWatch({ name: fieldName, control });
+
+  const selectedFreeTextOption: SelectOption | undefined = useMemo(
+    () => fieldValue?.selection?.find((opt: SelectOption) => opt.isFreeText),
+    [fieldValue]
+  );
+
   return (
     <div className="flex flex-col gap-4">
       <FormField
         control={control}
-        name={`question-${question.id}`}
-        render={() => (
+        name={fieldName}
+        rules={{ required: true, minLength: 1 }}
+        render={({ field }) => (
           <FormItem>
-            {question.options.map((option) => (
-              <FormField
-                key={option.id}
-                control={control}
-                name={`question-${question.id}`}
-                rules={{ required: true, minLength: 1 }}
-                render={({ field }) => {
-                  return (
-                    <FormItem
-                      key={option.id}
-                      className="flex flex-row items-start space-x-3 space-y-0"
-                    >
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value?.includes(option.id)}
-                          onCheckedChange={(checked) => {
-                            return checked
-                              ? field.onChange([...field.value, option.id])
-                              : field.onChange(
-                                  field.value?.filter(
-                                    (value: string) => value !== option.id
-                                  )
-                                );
-                          }}
-                        />
-                      </FormControl>
-                      <FormLabel className="text-sm font-normal">
-                        {option.text[language]}
-                      </FormLabel>
-                    </FormItem>
-                  );
-                }}
-              />
-            ))}
+            {question.options.map((option) => {
+              const isChecked = field.value?.selection?.some(
+                (opt: any) => opt.id === option.id
+              );
+
+              return (
+                <FormItem
+                  key={option.id}
+                  className="flex flex-row items-start space-x-3 space-y-0"
+                >
+                  <FormControl>
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={(checked) => {
+                        const newValue = checked
+                          ? addOptionToMultiSelectAnswer(
+                              question.id,
+                              field.value,
+                              option as any
+                            )
+                          : removeSelectionFromMultiSelectAnswer(
+                              question.id,
+                              field.value,
+                              option.id
+                            );
+                        field.onChange(newValue);
+                      }}
+                    />
+                  </FormControl>
+                  <FormLabel className="text-sm font-normal">
+                    {option.text[language]}
+                  </FormLabel>
+                </FormItem>
+              );
+            })}
             <FormMessage />
           </FormItem>
         )}
       />
+      {selectedFreeTextOption && (
+        <FormQuestionFreeTextInput
+          control={control}
+          questionId={question.id}
+          freeTextOption={selectedFreeTextOption}
+          language={language}
+        />
+      )}
     </div>
   );
 };
