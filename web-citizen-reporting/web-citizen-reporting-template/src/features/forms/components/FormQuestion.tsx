@@ -8,7 +8,8 @@ import {
   isTextQuestion,
 } from "@/lib/utils";
 import { useAtomValue } from "jotai";
-import { useFormContext } from "react-hook-form";
+import { type Control } from "react-hook-form";
+import { useShouldDisplayQuestion } from "../hooks/useShouldDisplayQuestion";
 import {
   FormQuestionMultiSelectInput,
   FormQuestionNumberInput,
@@ -16,13 +17,13 @@ import {
   FormQuestionTextInput,
 } from "./FormQuestionInputs";
 
-interface BaseFormQuestionProps {
+interface FormQuestionProps {
   question: BaseQuestion;
+  control: Control;
 }
 
-const BaseFormQuestion = ({ question }: BaseFormQuestionProps) => {
+const BaseFormQuestion = ({ question, control }: FormQuestionProps) => {
   const language = useAtomValue(currentFormLanguageAtom);
-  const { control } = useFormContext();
 
   return (
     <div className="w-full flex flex-col gap-4" key={question.id}>
@@ -57,6 +58,14 @@ const BaseFormQuestion = ({ question }: BaseFormQuestionProps) => {
   );
 };
 
-export const FormQuestion = ({ question }: { question: BaseQuestion }) => {
-  return <BaseFormQuestion question={question} />;
+const QuestionWithDisplayLogic = ({ question, control }: FormQuestionProps) => {
+  const shouldDisplay = useShouldDisplayQuestion({ question, control });
+  if (!shouldDisplay) return;
+  return <BaseFormQuestion question={question} control={control} />;
+};
+
+export const FormQuestion = ({ question, control }: FormQuestionProps) => {
+  if (question.displayLogic)
+    return <QuestionWithDisplayLogic question={question} control={control} />;
+  return <BaseFormQuestion question={question} control={control} />;
 };

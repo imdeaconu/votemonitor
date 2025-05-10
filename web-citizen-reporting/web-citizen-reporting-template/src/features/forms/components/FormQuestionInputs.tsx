@@ -91,11 +91,12 @@ const addOptionToMultiSelectAnswer = (
 ) => {
   let selections = currentValue?.selection ?? [];
   selections = [...selections, option];
-  const multiselectAnswer: MultiSelectAnswer = {
+  let multiselectAnswer: MultiSelectAnswer = {
     $answerType: AnswerType.MultiSelectAnswerType,
     questionId,
     selection: selections,
   };
+
   return multiselectAnswer;
 };
 
@@ -131,7 +132,7 @@ export const FormQuestionFreeTextInput = ({
   return (
     <FormField
       control={control}
-      name={`question-${questionId}.${freeTextOption.id}`}
+      name={`question-${questionId}-ft-${freeTextOption.id}`}
       rules={{
         required: true,
         validate: (value: NumberAnswer | undefined) =>
@@ -296,6 +297,7 @@ export const FormQuestionMultiSelectInput = ({
 }) => {
   const fieldName = `question-${question.id}`;
   const fieldValue = useWatch({ name: fieldName, control });
+  const freeTextOptionId = question.options.find((opt) => opt.isFreeText)?.id;
 
   const selectedFreeTextOption: SelectOption | undefined = useMemo(
     () => fieldValue?.selection?.find((opt: SelectOption) => opt.isFreeText),
@@ -307,7 +309,11 @@ export const FormQuestionMultiSelectInput = ({
       <FormField
         control={control}
         name={fieldName}
-        rules={{ required: true, minLength: 1 }}
+        rules={{
+          required: true,
+          validate: (value: MultiSelectAnswer | undefined) =>
+            value?.selection && value.selection.length > 0,
+        }}
         render={({ field }) => (
           <FormItem>
             {question.options.map((option) => {
