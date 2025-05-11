@@ -8,7 +8,7 @@ import {
   isTextQuestion,
 } from "@/lib/utils";
 import { useAtomValue } from "jotai";
-import { type Control } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useShouldDisplayQuestion } from "../hooks/useShouldDisplayQuestion";
 import {
   FormQuestionMultiSelectInput,
@@ -19,10 +19,10 @@ import {
 
 interface FormQuestionProps {
   question: BaseQuestion;
-  control: Control;
+  isRequired: boolean;
 }
 
-const BaseFormQuestion = ({ question, control }: FormQuestionProps) => {
+const BaseFormQuestion = ({ question, isRequired }: FormQuestionProps) => {
   const language = useAtomValue(currentFormLanguageAtom);
 
   return (
@@ -35,37 +35,44 @@ const BaseFormQuestion = ({ question, control }: FormQuestionProps) => {
         <FormDescription>{question?.helptext?.[language]}</FormDescription>
       </div>
       {isNumberQuestion(question) && (
-        <FormQuestionNumberInput questionId={question.id} control={control} />
+        <FormQuestionNumberInput
+          questionId={question.id}
+          isRequired={isRequired}
+        />
       )}
       {isTextQuestion(question) && (
-        <FormQuestionTextInput questionId={question.id} control={control} />
+        <FormQuestionTextInput
+          questionId={question.id}
+          isRequired={isRequired}
+        />
       )}
       {isSingleSelectQuestion(question) && (
         <FormQuestionSingleSelectInput
           question={question}
-          control={control}
           language={language}
+          isRequired={isRequired}
         />
       )}
       {isMultiSelectQuestion(question) && (
         <FormQuestionMultiSelectInput
           question={question}
-          control={control}
           language={language}
+          isRequired={isRequired}
         />
-      )}{" "}
+      )}
     </div>
   );
 };
 
-const QuestionWithDisplayLogic = ({ question, control }: FormQuestionProps) => {
+const QuestionWithDisplayLogic = ({ question }: { question: BaseQuestion }) => {
+  const { control } = useFormContext();
   const shouldDisplay = useShouldDisplayQuestion({ question, control });
   if (!shouldDisplay) return;
-  return <BaseFormQuestion question={question} control={control} />;
+  return <BaseFormQuestion question={question} isRequired={shouldDisplay} />;
 };
 
-export const FormQuestion = ({ question, control }: FormQuestionProps) => {
+export const FormQuestion = ({ question }: { question: BaseQuestion }) => {
   if (question.displayLogic)
-    return <QuestionWithDisplayLogic question={question} control={control} />;
-  return <BaseFormQuestion question={question} control={control} />;
+    return <QuestionWithDisplayLogic question={question} />;
+  return <BaseFormQuestion question={question} isRequired={true} />;
 };

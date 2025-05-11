@@ -1,11 +1,8 @@
 import {
-  AnswerType,
   QuestionType,
   type MultiSelectAnswer,
   type MultiSelectQuestion,
   type NumberAnswer,
-  type RatingAnswer,
-  type SelectedOption,
   type SelectOption,
   type SingleSelectAnswer,
   type SingleSelectQuestion,
@@ -24,117 +21,30 @@ import { NumberInput } from "@/components/ui/number-input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useMemo } from "react";
-import { useWatch, type Control } from "react-hook-form";
-const mapFormDataToAnswer = (
-  questionType: QuestionType,
-  questionId: string,
-  value: any
-) => {
-  switch (questionType) {
-    case QuestionType.NumberQuestionType:
-      const numberAnswer: NumberAnswer = {
-        $answerType: AnswerType.NumberAnswerType,
-        questionId,
-        value,
-      };
-      return numberAnswer;
-
-    case QuestionType.TextQuestionType:
-      const textAnswer: TextAnswer = {
-        $answerType: AnswerType.TextAnswerType,
-        questionId,
-        text: value,
-      };
-      return textAnswer;
-
-    case QuestionType.MultiSelectQuestionType:
-      let selectionArray = value
-        ? value.map((val: string) => {
-            return { optionId: val };
-          })
-        : [];
-      const multiselectAnswer: MultiSelectAnswer = {
-        $answerType: AnswerType.MultiSelectAnswerType,
-        questionId,
-        selection: selectionArray,
-      };
-      return multiselectAnswer;
-
-    case QuestionType.SingleSelectQuestionType:
-      const singleSelectAnswer: SingleSelectAnswer = {
-        $answerType: AnswerType.SingleSelectAnswerType,
-        questionId,
-        selection: { optionId: value },
-      };
-
-      return singleSelectAnswer;
-
-    case QuestionType.RatingQuestionType:
-      const ratingAnswer: RatingAnswer = {
-        $answerType: AnswerType.RatingAnswerType,
-        questionId,
-        value,
-      };
-
-      return ratingAnswer;
-
-    default:
-      return value;
-      break;
-  }
-};
-
-const addOptionToMultiSelectAnswer = (
-  questionId: string,
-  currentValue: MultiSelectAnswer,
-  option: SelectedOption
-) => {
-  let selections = currentValue?.selection ?? [];
-  selections = [...selections, option];
-  let multiselectAnswer: MultiSelectAnswer = {
-    $answerType: AnswerType.MultiSelectAnswerType,
-    questionId,
-    selection: selections,
-  };
-
-  return multiselectAnswer;
-};
-
-const removeSelectionFromMultiSelectAnswer = (
-  questionId: string,
-  currentValue: MultiSelectAnswer,
-  optionId: string
-) => {
-  let selections = currentValue?.selection ?? [];
-  const filteredSelections = selections.filter(
-    (selected) => (selected as unknown as SelectOption).id !== optionId
-  );
-
-  const multiselectAnswer: MultiSelectAnswer = {
-    $answerType: AnswerType.MultiSelectAnswerType,
-    questionId,
-    selection: filteredSelections,
-  };
-  return multiselectAnswer;
-};
-
+import { useFormContext, useWatch } from "react-hook-form";
+import {
+  addOptionToMultiSelectAnswer,
+  mapFormDataToAnswer,
+  removeSelectionFromMultiSelectAnswer,
+} from "../utils";
 export const FormQuestionFreeTextInput = ({
-  control,
   questionId,
   freeTextOption,
   language,
+  isRequired,
 }: {
-  control: Control<any>;
   questionId: string;
   freeTextOption: SelectOption;
   language: string;
+  isRequired?: boolean;
 }) => {
+  const { control } = useFormContext();
   return (
     <FormField
       control={control}
       name={`question-${questionId}-ft-${freeTextOption.id}`}
       rules={{
-        required: true,
+        required: isRequired,
         validate: (value: NumberAnswer | undefined) =>
           value?.value !== undefined,
       }}
@@ -154,18 +64,19 @@ export const FormQuestionFreeTextInput = ({
 };
 
 export const FormQuestionNumberInput = ({
-  control,
   questionId,
+  isRequired,
 }: {
-  control: Control<any>;
   questionId: string;
+  isRequired?: boolean;
 }) => {
+  const { control } = useFormContext();
   return (
     <FormField
       control={control}
       name={`question-${questionId}`}
       rules={{
-        required: true,
+        required: isRequired,
         validate: (value: NumberAnswer | undefined) =>
           value?.value !== undefined,
       }}
@@ -195,18 +106,19 @@ export const FormQuestionNumberInput = ({
 };
 
 export const FormQuestionTextInput = ({
-  control,
   questionId,
+  isRequired,
 }: {
-  control: Control<any>;
   questionId: string;
+  isRequired?: boolean;
 }) => {
+  const { control } = useFormContext();
   return (
     <FormField
       control={control}
       name={`question-${questionId}`}
       rules={{
-        required: true,
+        required: isRequired,
         validate: (value: TextAnswer | undefined) => value?.text !== "",
       }}
       render={({ field }) => (
@@ -235,19 +147,20 @@ export const FormQuestionTextInput = ({
 };
 
 export const FormQuestionSingleSelectInput = ({
-  control,
   question,
   language,
+  isRequired,
 }: {
-  control: Control<any>;
   question: SingleSelectQuestion;
   language: string;
+  isRequired?: boolean;
 }) => {
+  const { control } = useFormContext();
   return (
     <FormField
       control={control}
       name={`question-${question.id}`}
-      rules={{ required: true }}
+      rules={{ required: isRequired }}
       render={({ field }) => (
         <FormItem className="space-y-3">
           <FormControl>
@@ -287,17 +200,18 @@ export const FormQuestionSingleSelectInput = ({
 };
 
 export const FormQuestionMultiSelectInput = ({
-  control,
   question,
   language,
+  isRequired,
 }: {
-  control: Control<any>;
   question: MultiSelectQuestion;
   language: string;
+  isRequired?: boolean;
 }) => {
+  const { control } = useFormContext();
+
   const fieldName = `question-${question.id}`;
   const fieldValue = useWatch({ name: fieldName, control });
-  const freeTextOptionId = question.options.find((opt) => opt.isFreeText)?.id;
 
   const selectedFreeTextOption: SelectOption | undefined = useMemo(
     () => fieldValue?.selection?.find((opt: SelectOption) => opt.isFreeText),
@@ -310,7 +224,7 @@ export const FormQuestionMultiSelectInput = ({
         control={control}
         name={fieldName}
         rules={{
-          required: true,
+          required: isRequired,
           validate: (value: MultiSelectAnswer | undefined) =>
             value?.selection && value.selection.length > 0,
         }}
@@ -357,7 +271,6 @@ export const FormQuestionMultiSelectInput = ({
       />
       {selectedFreeTextOption && (
         <FormQuestionFreeTextInput
-          control={control}
           questionId={question.id}
           freeTextOption={selectedFreeTextOption}
           language={language}
