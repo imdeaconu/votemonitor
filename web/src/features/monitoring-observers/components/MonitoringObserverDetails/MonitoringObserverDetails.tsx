@@ -1,70 +1,61 @@
-import { Outlet, useLoaderData, useNavigate } from '@tanstack/react-router';
-import { MonitoringObserver } from '../../models/MonitoringObserver';
 import Layout from '@/components/layout/Layout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { PencilIcon } from '@heroicons/react/24/outline';
-import TableTagList from '@/components/table-tag-list/TableTagList';
 
-export default function ObserverDetails() {
-  const observer: MonitoringObserver = useLoaderData({ strict: false });
+import MonitoringObserverDetailsView from '../MonitoringObserverDetailsView/MonitoringObserverDetailsView';
+import { MonitoringObserverFormSubmissions } from '../MonitoringObserverFormSubmissions/MonitoringObserverFormSubmissions';
+
+import type { FunctionComponent } from '@/common/types';
+import { useCurrentElectionRoundStore } from '@/context/election-round.store';
+import { monitoringObserverDetailsQueryOptions } from '@/routes/monitoring-observers/edit.$monitoringObserverId';
+import { Route } from '@/routes/monitoring-observers/view/$monitoringObserverId.$tab';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
+import { MonitorObserverBackButton } from '../MonitoringObserverBackButton';
+import { MonitoringObserverQuickReports } from '../MonitoringObserverQuickReports/MonitoringObserverQuickReports';
+
+export default function MonitoringObserverDetails(): FunctionComponent {
+  const { monitoringObserverId, tab } = Route.useParams();
+  const currentElectionRoundId = useCurrentElectionRoundStore((s) => s.currentElectionRoundId);
+  const monitoringObserverQuery = useSuspenseQuery(
+    monitoringObserverDetailsQueryOptions(currentElectionRoundId, monitoringObserverId)
+  );
+  const monitoringObserver = monitoringObserverQuery.data;
+
+  const [currentTab, setCurrentTab] = useState(tab);
   const navigate = useNavigate();
-  const navigateToEdit = () => {
-    navigate({ to: '/monitoring-observers/$monitoringObserverId/edit', params: { monitoringObserverId: observer.id } });
-  };
 
+  function handleTabChange(tab: string): void {
+    setCurrentTab(tab);
+    navigate({
+      to: '.',
+      replace: true,
+      params(prev: any) {
+        return { ...prev, tab };
+      },
+    });
+  }
   return (
-    <Layout title={observer.name}>
-      <Tabs defaultValue='observer-details'>
-        <TabsList className='grid grid-cols-2 bg-gray-200 w-[400px] mb-4'>
-          <TabsTrigger value='observer-details'>Observer details</TabsTrigger>
-          <TabsTrigger value='responses'>Responses/forms</TabsTrigger>
+    <Layout backButton={<MonitorObserverBackButton />} title={`${monitoringObserver.displayName}`}>
+      <Tabs defaultValue='details' value={currentTab} onValueChange={handleTabChange}>
+        <TabsList className='grid grid-cols-3 bg-gray-200 w-[600px] mb-4'>
+          <TabsTrigger value='details'>Observer details</TabsTrigger>
+          <TabsTrigger value='responses'>Form responses</TabsTrigger>
+          <TabsTrigger value='quick-reports'>Quick reports</TabsTrigger>
+          {/* <TabsTrigger value='incident-reports'>Incident reports</TabsTrigger> */}
         </TabsList>
-        <TabsContent value='observer-details'>
-          <Card className='w-[800px] pt-0'>
-            <CardHeader className='flex flex-column gap-2'>
-              <div className='flex flex-row justify-between items-center'>
-                <CardTitle className='text-xl'>Observers details</CardTitle>
-                <Button onClick={navigateToEdit} variant='ghost-primary'>
-                  <PencilIcon className='w-[18px] mr-2 text-purple-900' />
-                  <span className='text-base text-purple-900'>Edit</span>
-                </Button>
-              </div>
-              <Separator />
-            </CardHeader>
-            <CardContent className='flex flex-col gap-6 items-baseline	'>
-              <div className='flex flex-col gap-1'>
-                <p className='text-gray-700 font-bold'>Name</p>
-                <p className='text-gray-900 font-normal'>{observer.name}</p>
-              </div>
-              <div className='flex flex-col gap-1'>
-                <p className='text-gray-700 font-bold'>Email</p>
-                <p className='text-gray-900 font-normal'>{observer.email}</p>
-              </div>
-              <div className='flex flex-col gap-1'>
-                <p className='text-gray-700 font-bold'>Phone</p>
-                <p className='text-gray-900 font-normal'>{observer.phoneNumber}</p>
-              </div>
-              <div className='flex flex-col gap-1'>
-                <p className='text-gray-700 font-bold'>Tags</p>
-                <TableTagList tags={observer.tags} />
-              </div>
-              <div className='flex flex-col gap-1'>
-                <p className='text-gray-700 font-bold'>Last activity</p>
-                <p className='text-gray-900 font-normal'>Oct 16, 2023, 4:32:53 AM</p>
-              </div>
-              <div className='flex flex-col gap-1'>
-                <p className='text-gray-700 font-bold'>Status</p>
-                <Badge className={'badge-' + observer.status}>{observer.status}</Badge>
-              </div>
-            </CardContent>
-            <CardFooter className='flex justify-between'></CardFooter>
-          </Card>
+        <TabsContent value='details'>
+          <MonitoringObserverDetailsView />
         </TabsContent>
-        <TabsContent value='responses'>Change your password here.</TabsContent>
+        <TabsContent value='responses'>
+          <MonitoringObserverFormSubmissions />
+        </TabsContent>
+        <TabsContent value='quick-reports'>
+          <MonitoringObserverQuickReports />
+        </TabsContent>
+        {/* <TabsContent value='incident-reports'>
+          <MonitoringObserverIncidentReports />
+        </TabsContent> */}
       </Tabs>
     </Layout>
   );

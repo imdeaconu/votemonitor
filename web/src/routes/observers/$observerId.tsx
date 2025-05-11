@@ -1,17 +1,19 @@
 import { authApi } from '@/common/auth-api';
-import ObserverDetails from '@/features/observers/components/ObserverDetails/ObserverDetails';
-import { Observer } from '@/features/observers/models/Observer';
+import ObserverProfile from '@/features/observers/components/ObserverProfile/ObserverProfile';
+import { observersKeys } from '@/features/observers/hooks/observers-queries';
+import { Observer } from '@/features/observers/models/observer';
+import { redirectIfNotAuth, redirectIfNotPlatformAdmin } from '@/lib/utils';
 import { queryOptions } from '@tanstack/react-query';
-import { Outlet, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 
-export const observerQueryOptions = (observerId: string) =>
+export const observerDetailsQueryOptions = (observerId: string) =>
   queryOptions({
-    queryKey: ['observer', { observerId }],
+    queryKey: observersKeys.detail(observerId),
     queryFn: async () => {
       const response = await authApi.get<Observer>(`/observers/${observerId}`);
 
       if (response.status !== 200) {
-        throw new Error('Failed to fetch ngo');
+        throw new Error('Failed to fetch observer details');
       }
 
       return response.data;
@@ -19,15 +21,15 @@ export const observerQueryOptions = (observerId: string) =>
   });
 
 export const Route = createFileRoute('/observers/$observerId')({
+  beforeLoad: () => {
+    redirectIfNotAuth();
+    redirectIfNotPlatformAdmin();
+  },
   component: Details,
   loader: ({ context: { queryClient }, params: { observerId } }) =>
-    queryClient.ensureQueryData(observerQueryOptions(observerId)),
+    queryClient.ensureQueryData(observerDetailsQueryOptions(observerId)),
 });
 
 function Details() {
-  return (
-    <div className='p-2'>
-      <ObserverDetails />
-    </div>
-  );
+  return <ObserverProfile />;
 }

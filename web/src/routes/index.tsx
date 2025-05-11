@@ -1,16 +1,26 @@
-import type { FunctionComponent } from '../common/types';
+import { AuthContext } from '@/context/auth.context';
+import NgoAdminDashboard from '@/features/ngo-admin-dashboard/components/Dashboard/Dashboard';
+import PlatformAdminDashboard from '@/features/platform-admin-dashboard/components/Dashboard/Dashboard';
+import { redirectIfNotAuth } from '@/lib/utils';
 import { createFileRoute } from '@tanstack/react-router';
-import Layout from '@/components/layout/Layout';
-import PollingStationsDashboard from '@/features/polling-stations/components/Dashboard/Dashboard';
+import { useContext } from 'react';
 
-const Index = (): FunctionComponent => {
-  return (
-    <Layout title={'Dashboard'}>
-      <PollingStationsDashboard />
-    </Layout>
-  );
+import { DataSources, type FunctionComponent } from '../common/types';
+import { z } from 'zod';
+const StatisticsDetails = (): FunctionComponent => {
+  const { userRole } = useContext(AuthContext);
+
+  return userRole === 'PlatformAdmin' ? <PlatformAdminDashboard /> : <NgoAdminDashboard />;
 };
 
+export const ZDataSourceSearchSchema = z.object({
+  dataSource: z.nativeEnum(DataSources).catch(DataSources.Ngo).optional(),
+});
+
 export const Route = createFileRoute('/')({
-  component: Index,
+  beforeLoad: () => {
+    redirectIfNotAuth();
+  },
+  component: StatisticsDetails,
+  validateSearch: ZDataSourceSearchSchema,
 });

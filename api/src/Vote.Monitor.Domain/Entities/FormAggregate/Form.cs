@@ -1,0 +1,284 @@
+﻿using FluentValidation;
+using FluentValidation.Results;
+using Vote.Monitor.Core.Helpers;
+using Vote.Monitor.Core.Models;
+using Vote.Monitor.Domain.Entities.CitizenReportAggregate;
+using Vote.Monitor.Domain.Entities.FormAnswerBase;
+using Vote.Monitor.Domain.Entities.FormAnswerBase.Answers;
+using Vote.Monitor.Domain.Entities.FormBase;
+using Vote.Monitor.Domain.Entities.FormBase.Questions;
+using Vote.Monitor.Domain.Entities.FormSubmissionAggregate;
+using Vote.Monitor.Domain.Entities.IncidentReportAggregate;
+using Vote.Monitor.Domain.Entities.LocationAggregate;
+using Vote.Monitor.Domain.Entities.MonitoringNgoAggregate;
+using Vote.Monitor.Domain.Entities.MonitoringObserverAggregate;
+
+namespace Vote.Monitor.Domain.Entities.FormAggregate;
+
+public class Form : BaseForm
+{
+    public Guid MonitoringNgoId { get; private set; }
+    public MonitoringNgo MonitoringNgo { get; private set; }
+    public Guid ElectionRoundId { get; private set; }
+    public ElectionRound ElectionRound { get; private set; }
+    public int DisplayOrder { get; private set; }
+
+    private Form(
+        ElectionRound electionRound,
+        MonitoringNgo monitoringNgo,
+        FormType formType,
+        string code,
+        TranslatedString name,
+        TranslatedString description,
+        string defaultLanguage,
+        IEnumerable<string> languages,
+        string? icon,
+        IEnumerable<BaseQuestion> questions) : base(
+        formType,
+        code,
+        name,
+        description,
+        defaultLanguage,
+        languages,
+        icon,
+        questions,
+        FormStatus.Drafted)
+    {
+        MonitoringNgoId = monitoringNgo.Id;
+        MonitoringNgo = monitoringNgo;
+        ElectionRoundId = electionRound.Id;
+        ElectionRound = electionRound;
+    }
+
+    private Form(
+        Guid electionRoundId,
+        Guid monitoringNgoId,
+        FormType formType,
+        string code,
+        TranslatedString name,
+        TranslatedString description,
+        string defaultLanguage,
+        IEnumerable<string> languages,
+        string? icon,
+        IEnumerable<BaseQuestion> questions) : base(
+        formType,
+        code,
+        name,
+        description,
+        defaultLanguage,
+        languages,
+        icon,
+        questions,
+        FormStatus.Drafted)
+    {
+        MonitoringNgoId = monitoringNgoId;
+        ElectionRoundId = electionRoundId;
+    }
+
+    [JsonConstructor]
+    public Form(Guid id,
+        Guid electionRoundId,
+        Guid monitoringNgoId,
+        FormType formType,
+        string code,
+        TranslatedString name,
+        TranslatedString description,
+        FormStatus status,
+        string defaultLanguage,
+        string[] languages,
+        string? icon,
+        int numberOfQuestions,
+        LanguagesTranslationStatus languagesTranslationStatus,
+        int displayOrder) : base(id,
+        formType,
+        code,
+        name,
+        description,
+        status,
+        defaultLanguage,
+        languages,
+        icon,
+        numberOfQuestions,
+        languagesTranslationStatus)
+    {
+        MonitoringNgoId = monitoringNgoId;
+        ElectionRoundId = electionRoundId;
+        DisplayOrder = displayOrder;
+    }
+
+    public static Form Create(
+        ElectionRound electionRound,
+        MonitoringNgo monitoringNgo,
+        FormType formType,
+        string code,
+        TranslatedString name,
+        TranslatedString description,
+        string defaultLanguage,
+        IEnumerable<string> languages,
+        string? icon,
+        IEnumerable<BaseQuestion> questions) =>
+        new(electionRound, monitoringNgo, formType, code, name, description, defaultLanguage, languages, icon,
+            questions);
+
+    public static Form Create(
+        Guid electionRoundId,
+        Guid monitoringNgoId,
+        FormType formType,
+        string code,
+        TranslatedString name,
+        TranslatedString description,
+        string defaultLanguage,
+        IEnumerable<string> languages,
+        string? icon,
+        IEnumerable<BaseQuestion> questions) =>
+        new(electionRoundId, monitoringNgoId, formType, code, name, description, defaultLanguage, languages, icon,
+            questions);
+
+    public Form Duplicate() =>
+        new(ElectionRoundId, MonitoringNgoId, FormType, Code, Name, Description, DefaultLanguage, Languages, Icon,
+            Questions);
+
+    public FormSubmission CreateFormSubmission(PollingStation pollingStation,
+        MonitoringObserver monitoringObserver,
+        List<BaseAnswer>? answers,
+        bool? isCompleted,
+        DateTime lastUpdatedAt)
+    {
+        answers ??= [];
+        var numberOfQuestionAnswered = AnswersHelpers.CountNumberOfQuestionsAnswered(Questions, answers);
+        var numberOfFlaggedAnswers = AnswersHelpers.CountNumberOfFlaggedAnswers(Questions, answers);
+
+        var validationResult = AnswersValidator.GetValidationResults(answers, Questions);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
+
+        return FormSubmission.Create(ElectionRound,
+            pollingStation,
+            monitoringObserver,
+            this,
+            answers,
+            numberOfQuestionAnswered,
+            numberOfFlaggedAnswers,
+            isCompleted,
+            lastUpdatedAt);
+    }
+
+    public CitizenReport CreateCitizenReport(Guid citizenReportId, Location location, List<BaseAnswer>? answers)
+    {
+        answers ??= [];
+
+        var numberOfQuestionAnswered = AnswersHelpers.CountNumberOfQuestionsAnswered(Questions, answers);
+        var numberOfFlaggedAnswers = AnswersHelpers.CountNumberOfFlaggedAnswers(Questions, answers);
+
+        var validationResult = AnswersValidator.GetValidationResults(answers, Questions);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
+
+        return CitizenReport.Create(citizenReportId,
+            ElectionRoundId,
+            this,
+            location,
+            answers,
+            numberOfQuestionAnswered,
+            numberOfFlaggedAnswers);
+    }
+
+    public IncidentReport CreateIncidentReport(
+        Guid incidentReportId,
+        MonitoringObserver monitoringObserver,
+        IncidentReportLocationType locationType,
+        string? locationDescription,
+        Guid? pollingStationId,
+        List<BaseAnswer>? answers,
+        bool? isCompleted,
+        DateTime lastUpdatedAt)
+    {
+        answers ??= [];
+
+        var numberOfQuestionAnswered = AnswersHelpers.CountNumberOfQuestionsAnswered(Questions, answers);
+        var numberOfFlaggedAnswers = AnswersHelpers.CountNumberOfFlaggedAnswers(Questions, answers);
+
+        var validationResult = AnswersValidator.GetValidationResults(answers, Questions);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
+
+        return IncidentReport.Create(incidentReportId, ElectionRoundId, monitoringObserver, locationType,
+            pollingStationId,
+            locationDescription, 
+            formId: Id, 
+            answers,
+            numberOfQuestionAnswered,
+            numberOfFlaggedAnswers, 
+            isCompleted,
+            lastUpdatedAt);
+    }
+
+    public override DraftFormResult DraftInternal()
+    {
+        return new DraftFormResult.Drafted();
+    }
+
+    public override ObsoleteFormResult ObsoleteInternal()
+    {
+        return new ObsoleteFormResult.Obsoleted();
+    }
+
+    public override PublishFormResult PublishInternal()
+    {
+        return new PublishFormResult.Published();
+    }
+
+    public Form Clone(Guid electionRoundId, Guid monitoringNgoId, string defaultLanguage, string[] languages)
+    {
+        if (Status != FormStatus.Published)
+        {
+            throw new ValidationException([
+                new ValidationFailure(nameof(Status), "Form template is not published.")
+            ]);
+        }
+
+        if (!Languages.Contains(defaultLanguage))
+        {
+            throw new ValidationException([
+                new ValidationFailure(nameof(defaultLanguage), "Default language is not supported.")
+            ]);
+        }
+
+        foreach (var iso in languages)
+        {
+            if (!Languages.Contains(iso))
+            {
+                throw new ValidationException([
+                    new ValidationFailure(nameof(languages) + $".{iso}", "Language is not supported.")
+                ]);
+            }
+        }
+
+        return Form.Create(electionRoundId,
+            monitoringNgoId,
+            FormType,
+            Code,
+            new TranslatedString(Name).TrimTranslations(languages),
+            new TranslatedString(Description).TrimTranslations(languages),
+            defaultLanguage,
+            languages,
+            null,
+            Questions.Select(x => x.DeepClone().TrimTranslations(languages)).ToList());
+    }
+
+
+#pragma warning disable CS8618 // Required by Entity Framework
+    private Form() : base()
+    {
+    }
+#pragma warning restore CS8618
+}

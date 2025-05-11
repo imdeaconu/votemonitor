@@ -1,0 +1,17 @@
+﻿global using Ardalis.SmartEnum.SystemTextJson;
+global using FastEndpoints;
+global using FastEndpoints.Swagger;
+global using Serilog;
+global using Feature.Auth;
+global using Feature.Countries;
+global using Feature.Languages;
+global using Feature.Observers;
+global using Feature.PollingStations;
+global using Vote.Monitor.Api.Swagger;
+global using Vote.Monitor.Core;
+global using Vote.Monitor.Core.Preprocessors;
+global using Vote.Monitor.Domain;
+global using Vote.Monitor.Domain.Entities.ApplicationUserAggregate;
+global using Vote.Monitor.Domain.Entities.ElectionRoundAggregate;
+global using Feature.ElectionRounds;
+global using Feature.UserPreferences;

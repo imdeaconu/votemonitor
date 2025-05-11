@@ -1,118 +1,202 @@
-import { Fragment, useState } from 'react';
-import { Disclosure, Menu, Transition } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { UserCircleIcon } from '@heroicons/react/24/solid';
-import type { ElectionRoundMonitoring, FunctionComponent } from '../../../common/types';
-import Logo from './Logo';
-import { Link } from '@tanstack/react-router';
-import clsx from 'clsx';
+import { authApi } from '@/common/auth-api';
+import { LanguageSelector } from '@/components/LanguageSelector/LanguageSelector';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
-import { authApi } from '@/common/auth-api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AuthContext } from '@/context/auth.context';
+import { useCurrentElectionRoundStore } from '@/context/election-round.store';
+import { electionRoundKeys } from '@/features/election-rounds/queries';
+import { staticDataKeys } from '@/hooks/query-keys';
+import { sleep } from '@/lib/utils';
 import { queryClient } from '@/main';
+import { Disclosure, Menu, Transition } from '@headlessui/react';
+import { Bars3Icon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PauseCircleIcon, PlayCircleIcon, StopCircleIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import { useQuery } from '@tanstack/react-query';
+import { Link, useNavigate, useRouter } from '@tanstack/react-router';
+import clsx from 'clsx';
+import { sortBy } from 'lodash';
+import { Fragment, useContext, useEffect, useMemo, useState } from 'react';
+import { ElectionRoundStatus, type FunctionComponent } from '../../../common/types';
+import Logo from './Logo';
+import { ElectionEvent } from '@/features/election-event/models/election-event';
 
-const user = {
-  name: 'Tom Cook',
-  email: 'tom@example.com',
-  imageUrl:
-    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-};
 const navigation = [
-  { name: 'Dashboard', to: '/' },
-  { name: 'Election rounds', to: '/election-rounds' },
-  { name: 'NGOs', to: '/ngos' },
-  { name: 'Observers', to: '/observers' },
-  { name: 'Monitoring Observers', to: '/monitoring-observers' },
-  { name: 'Form templates', to: '/form-templates' },
+  { name: 'Dashboard', to: '/', roles: ['PlatformAdmin', 'NgoAdmin'] },
+  { name: 'Election rounds', to: '/election-rounds', roles: ['PlatformAdmin'] },
+  { name: 'NGOs', to: '/ngos', roles: ['PlatformAdmin'] },
+  { name: 'Observers', to: '/observers', roles: ['PlatformAdmin'] },
+  { name: 'Form templates', to: '/form-templates', roles: 'PlatformAdmin' },
+  { name: 'Election event', to: '/election-event', roles: ['NgoAdmin'] },
+  { name: 'Observers', to: '/monitoring-observers', roles: ['NgoAdmin'] },
+  { name: 'Responses', to: '/responses', roles: ['NgoAdmin'] },
 ];
-const userNavigation = [{ name: 'Sign out', to: '#' }];
+const userNavigation: { name: string; to: string }[] = [];
 
 const Header = (): FunctionComponent => {
-  const [selectedElection, setSelectedElection] = useState<any>(null);
+  const { userRole, signOut } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [selectedElectionRound, setSelectedElection] = useState<ElectionEvent>();
+  const router = useRouter();
+  const { setCurrentElectionRoundId, currentElectionRoundId } = useCurrentElectionRoundStore((s) => s);
 
-  const { status, data } = useQuery({
-    queryKey: ['electionRounds'],
+  const handleSelectElectionRound = async (electionRound?: ElectionEvent): Promise<void> => {
+    if (electionRound && selectedElectionRound?.id != electionRound.id) {
+      setSelectedElection(electionRound);
+      setCurrentElectionRoundId(electionRound.id);
+
+      sleep(1);
+
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          if (query.queryKey === electionRoundKeys.all) {
+            return false;
+          }
+
+          if (query.queryKey[0] === staticDataKeys.all[0]) {
+            return false;
+          }
+
+          return true;
+        },
+      });
+
+      router.invalidate();
+    }
+  };
+
+  const { status, data: electionRounds } = useQuery({
+    queryKey: electionRoundKeys.all,
     queryFn: async () => {
-      const response = await authApi.get<{ electionRounds: ElectionRoundMonitoring[] }>('/election-rounds:monitoring');
+      const response = await authApi.get<{ electionRounds: ElectionEvent[] }>('/election-rounds:monitoring');
 
-      if (response.status !== 200) {
-        throw new Error('Failed to fetch observers');
-      }
-
-      console.log('refreshed', response.data.electionRounds[0]);
-
-      handleSelectEelection(response.data.electionRounds[0] as ElectionRoundMonitoring);
-
-      return response.data;
+      (response.data.electionRounds ?? []).forEach((er) => {
+        queryClient.setQueryData(electionRoundKeys.detail(er.id), er);
+      });
+      return response.data.electionRounds ?? [];
     },
     staleTime: 0,
     refetchOnWindowFocus: false,
+    enabled: userRole === 'NgoAdmin',
   });
 
-  const handleSelectEelection = (ev: any): void => {
-    setSelectedElection(ev);
-    localStorage.setItem('electionRoundId', ev.electionRoundId);
-    localStorage.setItem('monitoringNgoId', ev.monitoringNgoId);
+  useEffect(() => {
+    if (!!electionRounds) {
+      const electionRound = electionRounds.find((x) => x.id === currentElectionRoundId);
+      handleSelectElectionRound(electionRound ?? electionRounds[0]);
+    }
+  }, [electionRounds]);
 
-    queryClient.invalidateQueries({ queryKey: ['observers'] });
-    queryClient.invalidateQueries({ queryKey: ['tags'] });
-  };
+  const activeElections = useMemo(() => {
+    return sortBy(
+      [...(electionRounds ?? [])].filter((er) => er.status !== ElectionRoundStatus.Archived),
+      (er) => new Date(er.startDate).getTime(),
+      (er) => er.title
+    );
+  }, [electionRounds]);
+
+  const archivedElections = useMemo(() => {
+    return sortBy(
+      [...(electionRounds ?? [])].filter((er) => er.status === ElectionRoundStatus.Archived),
+      (er) => new Date(er.startDate).getTime(),
+      (er) => er.title
+    );
+  }, [electionRounds]);
 
   return (
-    <Disclosure as='nav' className='bg-white shadow-sm'>
+    <Disclosure as='nav' className='mb-10 bg-white shadow-sm'>
       {({ open }) => (
         <>
           <div className='container'>
             <div className='flex items-center justify-between h-16 gap-6 md:gap-10'>
-              <Logo />
+              <Link to='/'>
+                <Logo width={48} height={48} />
+              </Link>
 
               <div className='items-baseline flex-1 hidden gap-4 md:flex'>
-                {navigation.map((item) => (
-                  <Link
-                    to={item.to}
-                    search={{}}
-                    params={{}}
-                    key={item.name}
-                    className='px-3 py-2 text-sm font-medium rounded-md'
-                    activeProps={{
-                      className: 'bg-primary-100 text-primary-600 cursor-default',
-                      'aria-current': 'page',
-                    }}
-                    inactiveProps={{
-                      className:
-                        'hover:text-primary-600 hover:bg-secondary-300 focus:text-primary-600 focus:bg-secondary-300',
-                    }}>
-                    {item.name}
-                  </Link>
-                ))}
+                {navigation
+                  .filter((nav) => nav.roles.includes(userRole ?? 'Unknown'))
+                  .map((item) => (
+                    <Link
+                      to={item.to}
+                      search={{}}
+                      params={{}}
+                      key={item.name}
+                      className='px-3 py-2 text-sm font-medium rounded-md'
+                      activeProps={{
+                        className: 'bg-primary-100 text-primary-600 cursor-default',
+                        'aria-current': 'page',
+                      }}
+                      inactiveProps={{
+                        className:
+                          'hover:text-primary-600 hover:bg-secondary-300 focus:text-primary-600 focus:bg-secondary-300',
+                      }}>
+                      {item.name}
+                    </Link>
+                  ))}
               </div>
 
-              <div className='items-center gap-2 hidden md:flex'>
-                {status === 'pending' ? (
-                  <Skeleton className='w-[160px] h-[26px] mr-2 rounded-lg bg-secondary-300 text-secondary-900 hover:bg-secondary-300/90' />
+              <div className='items-center hidden gap-2 md:flex'>
+                {userRole !== 'NgoAdmin' ? (
+                  <></>
+                ) : status === 'pending' ? (
+                  <Skeleton className='w-[360px] h-[26px] mr-2 rounded-lg bg-secondary-300 text-secondary-900 hover:bg-secondary-300/90' />
                 ) : (
                   <DropdownMenu>
                     <DropdownMenuTrigger>
-                      <Badge className='bg-secondary-300 text-secondary-900 hover:bg-secondary-300/90'>
-                        <span className='election-text'>{selectedElection?.englishTitle}</span>
-                        <ChevronDownIcon className='w-[20px] ml-2' />
+                      <Badge className='max-w-[360px] bg-secondary-300 text-secondary-900 hover:bg-secondary-300/90'>
+                        <div className='flex items-center justify-between gap-2 w-full'>
+                          <div className='truncate max-w-[300px]' title={selectedElectionRound?.title}>
+                            {selectedElectionRound?.title}
+                          </div>
+                          <ChevronDownIcon className='w-[20px] ml-2' />
+                        </div>
                       </Badge>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuRadioGroup value={selectedElection} onValueChange={handleSelectEelection}>
-                        {data?.electionRounds?.map((electionRound) => (
-                          <DropdownMenuRadioItem
-                            key={electionRound.electionRoundId}
-                            value={electionRound as unknown as string}>
-                            {electionRound.englishTitle}
+                      <DropdownMenuRadioGroup
+                        value={selectedElectionRound?.id ?? ''}
+                        onValueChange={(value) => {
+                          const electionRound = electionRounds?.find((er) => er.id === value);
+                          handleSelectElectionRound(electionRound);
+                        }}>
+                        <DropdownMenuLabel> Upcomming elections </DropdownMenuLabel>
+
+                        {activeElections?.map((electionRound) => (
+                          <DropdownMenuRadioItem key={electionRound.id} value={electionRound.id}>
+                            <div className='flex items-center gap-2'>
+                              {electionRound?.status === ElectionRoundStatus.NotStarted ? (
+                                <PauseCircleIcon className='w-4 h-4 text-slate-700' />
+                              ) : null}
+                              {electionRound?.status === ElectionRoundStatus.Started ? (
+                                <PlayCircleIcon className='w-4 h-4 text-green-700' />
+                              ) : null}
+                              <div className='truncate max-w-[340px]' title={electionRound.title}>
+                                {electionRound.title}
+                              </div>
+                            </div>
+                          </DropdownMenuRadioItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel> Archived elections </DropdownMenuLabel>
+                        {archivedElections?.map((electionRound) => (
+                          <DropdownMenuRadioItem key={electionRound.id} value={electionRound.id}>
+                            <div className='flex items-center gap-2'>
+                              <StopCircleIcon className='w-4 h-4 text-yellow-700' />
+
+                              <div className='truncate max-w-[340px]' title={electionRound.title}>
+                                {electionRound.title}
+                              </div>
+                            </div>
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>
@@ -147,6 +231,22 @@ const Header = (): FunctionComponent => {
                           </Link>
                         </Menu.Item>
                       ))}
+
+                      <Menu.Item key='language-selector'>
+                        <LanguageSelector />
+                      </Menu.Item>
+
+                      <Menu.Item key='sign-out'>
+                        <Button
+                          type='button'
+                          variant='link'
+                          onClick={() => {
+                            signOut();
+                            navigate({ to: '/login' });
+                          }}>
+                          Sign out
+                        </Button>
+                      </Menu.Item>
                     </Menu.Items>
                   </Transition>
                 </Menu>
@@ -173,22 +273,25 @@ const Header = (): FunctionComponent => {
 
           <Disclosure.Panel className='md:hidden'>
             <div className='px-2 pt-2 pb-3 space-y-1 sm:px-3'>
-              {navigation.map((item) => (
-                <Disclosure.Button
-                  key={item.name}
-                  as={Link}
-                  to={item.to}
-                  search={{}}
-                  params={{}}
-                  className='block px-3 py-2 text-base font-medium rounded-md'
-                  activeProps={{ className: 'bg-primary-100 text-primary-600 cursor-default', 'aria-current': 'page' }}
-                  inactiveProps={{
-                    className:
-                      'hover:text-primary-600 hover:bg-secondary-300 focus:text-primary-600 focus:bg-secondary-300',
-                  }}>
-                  {item.name}
-                </Disclosure.Button>
-              ))}
+              {navigation
+                .filter((nav) => nav.roles.includes(userRole ?? 'Unknown'))
+                .map((item) => (
+                  <Disclosure.Button
+                    key={item.name}
+                    as={Link}
+                    to={item.to}
+                    className='block px-3 py-2 text-base font-medium rounded-md'
+                    activeProps={{
+                      className: 'bg-primary-100 text-primary-600 cursor-default',
+                      'aria-current': 'page',
+                    }}
+                    inactiveProps={{
+                      className:
+                        'hover:text-primary-600 hover:bg-secondary-300 focus:text-primary-600 focus:bg-secondary-300',
+                    }}>
+                    {item.name}
+                  </Disclosure.Button>
+                ))}
             </div>
             <div className='pt-4 pb-3 border-t border-gray-700'>
               <div className='flex items-center px-5'>
@@ -196,8 +299,7 @@ const Header = (): FunctionComponent => {
                   <UserCircleIcon className='w-10 h-10 fill-gray-400' />
                 </div>
                 <div className='ml-3'>
-                  <div className='text-base font-medium leading-none text-gray-800'>{user.name}</div>
-                  <div className='text-sm font-medium text-gray-500'>{user.email}</div>
+                  <div className='text-base font-medium leading-none text-gray-800'>{selectedElectionRound?.title}</div>
                 </div>
               </div>
               <div className='px-2 mt-3 space-y-1'>
@@ -206,12 +308,23 @@ const Header = (): FunctionComponent => {
                     key={item.name}
                     as={Link}
                     to={item.to}
-                    search={{}}
-                    params={{}}
                     className='block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800'>
                     {item.name}
                   </Disclosure.Button>
                 ))}
+
+                <LanguageSelector />
+                <Disclosure.Button
+                  key='Sign Out'
+                  as={Button}
+                  onClick={() => {
+                    signOut();
+                    navigate({ to: '/login' });
+                  }}
+                  variant='link'
+                  className='block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800'>
+                  Sign Out
+                </Disclosure.Button>
               </div>
             </div>
           </Disclosure.Panel>

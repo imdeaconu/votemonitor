@@ -1,13 +1,22 @@
 import type { ReactElement } from 'react';
-import { DataTable, type DataTableProps } from './DataTable';
+import { DataTable, type RowData, type DataTableProps } from './DataTable';
 import { SortOrder, type DataTableParameters } from '@/common/types';
 import type { PaginationState, SortingState } from '@tanstack/react-table';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { valueOrDefault } from '@/lib/utils';
 
-export function QueryParamsDataTable<TData, TValue>({
+export function QueryParamsDataTable<TData extends RowData, TValue>({
+  columnVisibility,
   columns,
   useQuery: pagedQuery,
+  queryParams: otherQueryParams,
+  getSubrows,
+  getRowClassName,
+  onDataFetchingSucceed,
+  onRowClick,
+  getCellProps,
+  emptySubtitle,
+  emptyTitle,
 }: DataTableProps<TData, TValue>): ReactElement {
   const queryParams: DataTableParameters = useSearch({
     strict: false,
@@ -28,6 +37,7 @@ export function QueryParamsDataTable<TData, TValue>({
   const navigate = useNavigate();
   const setPaginationState = (p: PaginationState): void => {
     navigate({
+      to: '.',
       search: {
         ...queryParams,
         pageNumber: valueOrDefault(p.pageIndex, 0) + 1,
@@ -39,11 +49,12 @@ export function QueryParamsDataTable<TData, TValue>({
   };
 
   const setSortingState = (s: SortingState): void => {
-    if (!s.length) {
+    if (s.length === 0) {
       return;
     }
 
     navigate({
+      to: '.',
       search: {
         ...queryParams,
         sortColumnName: s[0]?.id,
@@ -55,7 +66,7 @@ export function QueryParamsDataTable<TData, TValue>({
   };
 
   return (
-    <div>
+    <div className='w-full'>
       <DataTable
         columns={columns}
         useQuery={pagedQuery}
@@ -63,6 +74,15 @@ export function QueryParamsDataTable<TData, TValue>({
         setPaginationExt={setPaginationState}
         sortingExt={sortingState}
         setSortingExt={setSortingState}
+        columnVisibility={columnVisibility}
+        queryParams={otherQueryParams}
+        getSubrows={getSubrows}
+        getRowClassName={getRowClassName}
+        onDataFetchingSucceed={onDataFetchingSucceed}
+        onRowClick={onRowClick}
+        getCellProps={getCellProps}
+        emptySubtitle={emptySubtitle}
+        emptyTitle={emptyTitle}
       />
     </div>
   );

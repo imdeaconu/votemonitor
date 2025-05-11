@@ -1,7 +1,9 @@
-# votemonitor
+# Vote Monitor
 
-## Technologies & Libraries
+## Backend Technologies & Libraries
 * [FastEndpoints](https://fast-endpoints.com/)
+* [Dapper](https://github.com/DapperLib/Dapper)
+* [EFCore](https://github.com/dotnet/efcore)
 * [FluentValidation](https://docs.fluentvalidation.net/en/latest/)
 * [Ardalis.Specification](https://github.com/ardalis/specification)
 * [Ardalis.SmartEnum](https://github.com/ardalis/SmartEnum)
@@ -9,11 +11,20 @@
 * [TestContainers](https://testcontainers.com/)
 * [FluentAssertions](https://fluentassertions.com/)
 * [Bogus](https://github.com/bchavez/Bogus)
+* [NSubstitute](https://github.com/nsubstitute/NSubstitute)
+
+## Frontend Technologies & Libraries
+* [React + Vite](https://github.com/RicardoValdovinos/vite-react-boilerplate)
+* [ShadCnUi](https://github.com/shadcn-ui/ui)
+* [TanStack Router](https://github.com/TanStack/router)
+* [TanStack Query](https://github.com/TanStack/query)
+* [TanStack Table](https://github.com/TanStack/table)
+* [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) 
 
 ## Getting started using docker
 
 1. Rename `.env.example` to `.env`
-2. Build project
+2. Build the project
     ```
     docker compose build
     ```
@@ -22,30 +33,36 @@
     docker compose up -d 
     ```
 4. Seed platform admin
-```sql
-INSERT INTO public."Users"("Id", "Name", "Login", "Password", "Role", "Status", "CreatedBy", "CreatedOn",  "LastModifiedBy", "LastModifiedOn") VALUES ('771b0bb0-3f87-47a0-bc64-0878e2070374', 'PlatformAdmin', '<your-username>', '<your-password>', 'PlatformAdmin', 'Active', '00000000-0000-0000-0000-000000000000', '2024-01-23 00:00:00+00', '00000000-0000-0000-0000-000000000000', NULL);
-
-INSERT INTO public."PlatformAdmins" VALUES ('771b0bb0-3f87-47a0-bc64-0878e2070374');
-
-INSERT INTO public."UserPreferences"("ApplicationUserId", "LanguageId") VALUES ('771b0bb0-3f87-47a0-bc64-0878e2070374','094b3769-68b1-6211-ba2d-6bba92d6a167');
-```
+    ```json
+    {
+        "Seeders": {
+             "PlatformAdminSeeder": {
+                 "FirstName": "John",
+                 "LastName": "Doe",
+                 "Email": "john.doe@example.com",
+                 "PhoneNumber": "1234567890",
+                 "Password": "<your-password>"
+            }
+        }
+    }
+    ```
 5. Navigate to http://localhost:5000/swagger/index.html
 6. Obtain token
-```
-    POST /api/auth
-    {
-        "username": "<your-username>",
-        "password": "<your-password>"
-    }
-```
+   ```
+   POST /api/auth
+   {
+       "username": "<your-username>",
+       "password": "<your-password>"
+   }
+   ```
 7. Enjoy
 
 ## Getting started using VisualStudio
-1. start an postgres instance
+1. start a postgres instance
 2. update appsettings.Development.json
 3. Build
 4. Run and debug
-5. Enjoy 
+5. Enjoy
 
 ## Adding EF migrations
 
@@ -58,11 +75,11 @@ dotnet ef migrations add MyNewMigration --project .\src\Vote.Monitor.Domain --st
 [documentation](documentation/polling-stations/README.md)
 
 
-## Confguration
+## Configuration
 
 ### File Storage
 
-For local developemnt you can use your lcoal file ssytem for storage by setting the file storge type in appconfig as follows.
+For local development you can use your local file system for storage by setting the file storge type in appconfig as follows.
 
 ```
  "FileStorage": {
@@ -76,7 +93,7 @@ For local developemnt you can use your lcoal file ssytem for storage by setting 
  }
 ```
 
-To use S3 file storage you need to set `"FileStorageType": "S3",` and need to have the following environment variables set, with the key ID referencing an IAM user with permissions restricted to only S3. 
+To use S3 file storage, you need to set `"FileStorageType": "S3",` and need to have the following environment variables set, with the key ID referencing an IAM user with permissions restricted to only S3.
 ```
  "AWS_ACCESS_KEY_ID": "",
  "AWS_SECRET_ACCESS_KEY": "",

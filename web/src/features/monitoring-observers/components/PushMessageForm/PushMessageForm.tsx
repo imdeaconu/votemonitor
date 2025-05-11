@@ -3,193 +3,233 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-function PushMessageForm() {
-  const createPushMessageSchema = z.object({
-    title: z.string().min(1, { message: 'Your message must have a title before sending.' }),
-    messageBody: z
-      .string()
-      .min(1, { message: 'Your message must have a detailed description before sending.' })
-      .max(1000),
-    recipients: z.string(),
-    location: z.string(),
-    location1: z.string(),
-    location2: z.string(),
-    location3: z.string(),
-  });
+import { authApi } from '@/common/auth-api';
+import type { FunctionComponent } from '@/common/types';
+import { PollingStationsFilters } from '@/components/PollingStationsFilters/PollingStationsFilters';
+import { RichTextEditor } from '@/components/rich-text-editor';
+import { QueryParamsDataTable } from '@/components/ui/DataTable/QueryParamsDataTable';
+import { toast } from '@/components/ui/use-toast';
+import { useCurrentElectionRoundStore } from '@/context/election-round.store';
+import { FilteringContainer } from '@/features/filtering/components/FilteringContainer';
+import { FormSubmissionsFollowUpFilter } from '@/features/filtering/components/FormSubmissionsFollowUpFilter';
+import { FormSubmissionsFormFilter } from '@/features/filtering/components/FormSubmissionsFormFilter';
+import { FormSubmissionsFromDateFilter } from '@/features/filtering/components/FormSubmissionsFromDateFilter';
+import { FormSubmissionsQuestionsAnsweredFilter } from '@/features/filtering/components/FormSubmissionsQuestionsAnsweredFilter';
+import { FormSubmissionsToDateFilter } from '@/features/filtering/components/FormSubmissionsToDateFilter';
+import { FormTypeFilter } from '@/features/filtering/components/FormTypeFilter';
+import { HasQuickReportsFilter } from '@/features/filtering/components/HasQuickReportsFilter';
+import { QuickReportsFollowUpFilter } from '@/features/filtering/components/QuickReportsFollowUpFilter';
+import { QuickReportsIncidentCategoryFilter } from '@/features/filtering/components/QuickReportsIncidentCategoryFilter';
+import { FILTER_KEY } from '@/features/filtering/filtering-enums';
+import { toBoolean } from '@/lib/utils';
+import { Route } from '@/routes/monitoring-observers/create-new-message';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useRouter } from '@tanstack/react-router';
+import { useDebounce } from '@uidotdev/usehooks';
+import { MonitoringObserverStatusSelect } from '../../filtering/MonitoringObserverStatusSelect';
+import { MonitoringObserverTagsSelect } from '../../filtering/MonitoringObserverTagsSelect';
+import { pushMessagesKeys, useTargetedMonitoringObservers } from '../../hooks/push-messages-queries';
+import type { SendPushNotificationRequest } from '../../models/push-message';
+import type { PushMessageTargetedObserversSearchParams } from '../../models/search-params';
+import { targetedMonitoringObserverColDefs } from '../../utils/column-defs';
+
+const createPushMessageSchema = z.object({
+  title: z.string().min(1, { message: 'Your message must have a title before sending.' }),
+  messageBody: z.string().min(1, { message: 'Your message must have a detailed description before sending.' }),
+});
+
+function PushMessageForm(): FunctionComponent {
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const [totalRowsCount, setTotalRowsCount] = useState(0);
+  const [searchText, setSearchText] = useState<string>(search.searchText ?? '');
+  const debouncedSearchText = useDebounce(searchText, 300);
+  const currentElectionRoundId = useCurrentElectionRoundStore((s) => s.currentElectionRoundId);
+  const router = useRouter();
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    navigate({
+      to: '.',
+      replace: true,
+      search: (prev: any) => ({ ...prev, [FILTER_KEY.SearchText]: debouncedSearchText }),
+    });
+  }, [debouncedSearchText]);
+
+  useEffect(() => {
+    setSearchText(search.searchText ?? '');
+  }, [search.searchText]);
+
+  const debouncedSearch = useDebounce(search, 300);
+
+  const queryParams = useMemo(() => {
+    const params: SendPushNotificationRequest = {
+      searchText: searchText,
+      statusFilter: debouncedSearch.statusFilter,
+      formTypeFilter: debouncedSearch.formTypeFilter,
+      level1Filter: debouncedSearch.level1Filter,
+      level2Filter: debouncedSearch.level2Filter,
+      level3Filter: debouncedSearch.level3Filter,
+      level4Filter: debouncedSearch.level4Filter,
+      level5Filter: debouncedSearch.level5Filter,
+      pollingStationNumberFilter: debouncedSearch.pollingStationNumberFilter,
+      followUpStatus: debouncedSearch.followUpStatus,
+      questionsAnswered: debouncedSearch.questionsAnswered,
+      hasFlaggedAnswers: toBoolean(debouncedSearch.hasFlaggedAnswers),
+      hasNotes: toBoolean(debouncedSearch.hasNotes),
+      hasAttachments: toBoolean(debouncedSearch.hasAttachments),
+      hasQuickReports: toBoolean(debouncedSearch.hasQuickReports),
+      tagsFilter: debouncedSearch.tagsFilter,
+      formId: debouncedSearch.formId,
+      fromDateFilter: debouncedSearch.submissionsFromDate?.toISOString(),
+      toDateFilter: debouncedSearch.submissionsToDate?.toISOString(),
+      monitoringObserverStatus: debouncedSearch.monitoringObserverStatus,
+      quickReportIncidentCategory: debouncedSearch.incidentCategory,
+      quickReportFollowUpStatus: debouncedSearch.quickReportFollowUpStatus,
+    };
+
+    return params;
+  }, [debouncedSearchText, debouncedSearch]);
+
+  const handleDataFetchingSucceed = (pageSize: number, currentPage: number, totalCount: number): void => {
+    setTotalRowsCount(totalCount);
+  };
 
   const form = useForm<z.infer<typeof createPushMessageSchema>>({
     resolver: zodResolver(createPushMessageSchema),
+    mode: 'all',
+    defaultValues: {
+      title: '',
+      messageBody: '',
+    },
   });
 
-  function onSubmit(values: z.infer<typeof createPushMessageSchema>) {
-    console.log(values);
+  const sendNotificationMutation = useMutation({
+    mutationFn: ({
+      electionRoundId,
+      request,
+    }: {
+      electionRoundId: string;
+      request: SendPushNotificationRequest & { title: string; body: string };
+    }) => {
+      return authApi.post<PushMessageTargetedObserversSearchParams>(
+        `/election-rounds/${electionRoundId}/notifications:send`,
+        request
+      );
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: pushMessagesKeys.all(currentElectionRoundId) });
+      toast({
+        title: 'Success',
+        description: 'Notification sent',
+      });
+
+      router.invalidate();
+      navigate({ to: '/monitoring-observers/$tab', params: { tab: 'push-messages' } });
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof createPushMessageSchema>): void {
+    sendNotificationMutation.mutate({
+      electionRoundId: currentElectionRoundId,
+      request: {
+        title: values.title,
+        body: values.messageBody,
+        ...queryParams,
+      },
+    });
   }
 
   return (
     <Layout title='Create new message'>
-      <Card className='w-[800px] py-6'>
-        <CardContent className='flex flex-col gap-6 items-baseline'>
+      <Card className='py-6'>
+        <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-              <FormField
-                control={form.control}
-                name='title'
-                render={({ field }) => (
-                  <FormItem className='w-[540px]'>
-                    <FormLabel className='text-left'>
-                      Title of message <span className='text-red-500'>*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Create a short title for your message that will appear in the push notification.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <h2 className='mb-10 text-xl font-medium'>1. Compose your message</h2>
 
-              <FormField
-                control={form.control}
-                name='messageBody'
-                render={({ field }) => (
-                  <FormItem className='w-[540px]'>
-                    <FormLabel className='text-left'>
-                      Message body <span className='text-red-500'>*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea rows={8} className='resize-none' {...field} />
-                    </FormControl>
-                    <FormDescription>1000 characters</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='recipients'
-                render={({ field }) => (
-                  <FormItem className='w-[540px]'>
-                    <FormLabel>
-                      Recipients <span className='text-red-500'>*</span>
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <div className='flex flex-col gap-6 mb-20'>
+                <FormField
+                  control={form.control}
+                  name='title'
+                  render={({ field }) => (
+                    <FormItem className='w-[540px]'>
+                      <FormLabel className='text-left'>
+                        Title of message <span className='text-red-500'>*</span>
+                      </FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='A subgroup of observers' />
-                        </SelectTrigger>
+                        <Input {...field} maxLength={256} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value='subgroup'>A subgroup of observers</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <FormDescription>
+                        Create a short title for your message that will appear in the push notification.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='location'
-                render={({ field }) => (
-                  <FormItem className='w-[540px]'>
-                    <FormLabel>
-                      Filter recipients by <span className='text-red-500'>*</span>
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormField
+                  control={form.control}
+                  name='messageBody'
+                  render={({ field, fieldState }) => (
+                    <FormItem className='w-[540px]'>
+                      <FormLabel className='text-left'>
+                        Message body <span className='text-red-500'>*</span>
+                      </FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Location' />
-                        </SelectTrigger>
+                        <RichTextEditor {...field} onValueChange={field.onChange} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value='subgroup'>Location</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <h2 className='mb-10 text-xl font-medium'>
+                2. Filter the list of observers to reduce it to the desired recipients of the message
+              </h2>
+
+              <div className='mb-8'>
+                <FilteringContainer>
+                  <Input
+                    onChange={(ev) => setSearchText(ev.currentTarget.value)}
+                    value={searchText}
+                    placeholder='Search'
+                  />
+                  <MonitoringObserverTagsSelect isUsingAlternativeFilteringKey />
+                  <MonitoringObserverStatusSelect />
+                  <FormTypeFilter />
+                  <FormSubmissionsFormFilter />
+                  <FormSubmissionsQuestionsAnsweredFilter />
+                  <FormSubmissionsFollowUpFilter />
+
+                  <FormSubmissionsFromDateFilter />
+                  <FormSubmissionsToDateFilter />
+                  <HasQuickReportsFilter />
+                  <QuickReportsIncidentCategoryFilter />
+                  <QuickReportsFollowUpFilter placeholder='Quick reports follow up status' />
+
+                  <PollingStationsFilters />
+                </FilteringContainer>
+              </div>
+
+              <QueryParamsDataTable
+                columns={targetedMonitoringObserverColDefs}
+                useQuery={(params) => useTargetedMonitoringObservers(currentElectionRoundId, params)}
+                onDataFetchingSucceed={handleDataFetchingSucceed}
+                queryParams={queryParams}
               />
 
-              <FormField
-                control={form.control}
-                name='location1'
-                render={({ field }) => (
-                  <FormItem className='w-[540px]'>
-                    <FormLabel>
-                      Location (Level 1) <span className='text-red-500'>*</span>
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Location' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='subgroup'>Location</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='location2'
-                render={({ field }) => (
-                  <FormItem className='w-[540px]'>
-                    <FormLabel>Location (Level 2)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Location' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='subgroup'>Location</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='location3'
-                render={({ field }) => (
-                  <FormItem className='w-[540px]'>
-                    <FormLabel>Location (Level 3)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Location' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='subgroup'>Location</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='fixed bottom-0 left-0 bg-white py-4 px-12 flex justify-end w-screen'>
-                <Button>Send message to 152 observers</Button>
+              <div className='fixed bottom-0 left-0 flex justify-end w-screen px-12 py-4 bg-white'>
+                <Button>Send message to {totalRowsCount} observers</Button>
               </div>
             </form>
           </Form>

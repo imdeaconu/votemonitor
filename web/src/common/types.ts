@@ -1,3 +1,4 @@
+import { isNilOrWhitespace, isNotNilOrWhitespace } from '@/lib/utils';
 import { z } from 'zod';
 
 export type FunctionComponent = React.ReactElement | null;
@@ -23,7 +24,7 @@ export enum SortOrder {
 export type SortParameters = {
   sortColumnName: string;
   sortOrder: SortOrder;
-  nameFilter?: string;
+  searchText?: string;
 };
 
 export type PageResponse<T> = {
@@ -31,13 +32,14 @@ export type PageResponse<T> = {
   pageSize: number;
   totalCount: number;
   items: T[];
+  isEmpty?: boolean;
 };
 
-export type DataTableParameters = PageParameters & SortParameters;
+export type DataTableParameters<TQueryParams = object> = PageParameters &
+  SortParameters & { otherParams?: TQueryParams };
 
-export type TranslatedString = {
-  [languageCode: string]: string;
-};
+export const ZTranslatedString = z.record(z.string());
+export type TranslatedString = z.infer<typeof ZTranslatedString>;
 
 export enum QuestionType {
   TextQuestionType = 'textQuestion',
@@ -48,12 +50,31 @@ export enum QuestionType {
   RatingQuestionType = 'ratingQuestion',
 }
 
+export const ZDisplayLogicCondition = z.enum([
+  'Equals',
+  'NotEquals',
+  'LessThan',
+  'LessEqual',
+  'GreaterThan',
+  'GreaterEqual',
+  'Includes',
+]);
+
+export type DisplayLogicCondition = z.infer<typeof ZDisplayLogicCondition>;
+
+export interface DisplayLogic {
+  parentQuestionId: string;
+  condition: DisplayLogicCondition;
+  value: string;
+}
+
 export interface BaseQuestion {
   id: string;
   $questionType: QuestionType;
   code: string;
   text: TranslatedString;
-  helptext?: TranslatedString | null;
+  helptext?: TranslatedString;
+  displayLogic?: DisplayLogic;
 }
 
 export interface DateQuestion extends BaseQuestion {
@@ -62,11 +83,11 @@ export interface DateQuestion extends BaseQuestion {
 
 export interface TextQuestion extends BaseQuestion {
   $questionType: QuestionType.TextQuestionType;
-  inputPlaceholder?: TranslatedString | null;
+  inputPlaceholder?: TranslatedString;
 }
 export interface NumberQuestion extends BaseQuestion {
   $questionType: QuestionType.NumberQuestionType;
-  inputPlaceholder?: TranslatedString | null;
+  inputPlaceholder?: TranslatedString;
 }
 
 export enum RatingScaleType {
@@ -81,6 +102,8 @@ export enum RatingScaleType {
 }
 
 export interface RatingQuestion extends BaseQuestion {
+  upperLabel?: TranslatedString;
+  lowerLabel?: TranslatedString;
   $questionType: QuestionType.RatingQuestionType;
   scale: RatingScaleType;
 }
@@ -130,7 +153,7 @@ export type NumberAnswer = z.infer<typeof NumberAnswerSchema>;
 
 export const DateAnswerSchema = BaseAnswerSchema.extend({
   $answerType: z.literal(AnswerType.DateAnswerType),
-  date: z.string().optional(),
+  date: z.string().datetime({ offset: true }).optional(),
 });
 export type DateAnswer = z.infer<typeof DateAnswerSchema>;
 
@@ -142,7 +165,7 @@ export type RatingAnswer = z.infer<typeof RatingAnswerSchema>;
 
 export const SelectedOptionSchema = z.object({
   optionId: z.string().optional(),
-  text: z.string().optional(),
+  text: z.string().optional().nullable(),
 });
 export type SelectedOption = z.infer<typeof SelectedOptionSchema>;
 
@@ -158,12 +181,245 @@ export const MultiSelectAnswerSchema = BaseAnswerSchema.extend({
 });
 export type MultiSelectAnswer = z.infer<typeof MultiSelectAnswerSchema>;
 
-export type ElectionRoundMonitoring = {
-  monitoringNgoId: string;
-  electionRoundId: string;
-  title: string;
-  englishTitle: string;
-  startDate: string;
-  country: string;
-  countryId: string;
+export enum ElectionRoundStatus {
+  NotStarted = 'NotStarted',
+  Started = 'Started',
+  Archived = 'Archived',
+}
+
+export type LevelNode = {
+  id: number;
+  name: string;
+  depth: number;
+  parentId: number;
 };
+
+export type UserPayload = {
+  'user-role': string;
+};
+
+export enum FormSubmissionFollowUpStatus {
+  NotApplicable = 'NotApplicable',
+  NeedsFollowUp = 'NeedsFollowUp',
+  Resolved = 'Resolved',
+}
+
+export enum QuickReportFollowUpStatus {
+  NotApplicable = 'NotApplicable',
+  NeedsFollowUp = 'NeedsFollowUp',
+  Resolved = 'Resolved',
+}
+
+export enum IncidentReportFollowUpStatus {
+  NotApplicable = 'NotApplicable',
+  NeedsFollowUp = 'NeedsFollowUp',
+  Resolved = 'Resolved',
+}
+
+export enum CitizenReportFollowUpStatus {
+  NotApplicable = 'NotApplicable',
+  NeedsFollowUp = 'NeedsFollowUp',
+  Resolved = 'Resolved',
+}
+
+export enum QuestionsAnswered {
+  None = 'None',
+  Some = 'Some',
+  All = 'All',
+}
+export type HistogramData = {
+  [bucket: string]: number;
+};
+
+export enum ObserverStatus {
+  Active = 'Active',
+  Pending = 'Pending',
+  Deactivated = 'Deactivated',
+}
+
+export enum FormType {
+  PSI = 'PSI',
+  Opening = 'Opening',
+  Voting = 'Voting',
+  ClosingAndCounting = 'ClosingAndCounting',
+  CitizenReporting = 'CitizenReporting',
+  IncidentReporting = 'IncidentReporting',
+  Other = 'Other',
+}
+
+export enum TranslationStatus {
+  Translated = 'Translated',
+  MissingTranslations = 'MissingTranslations',
+}
+
+const ZLanguagesTranslationStatus = z.record(z.string(), z.nativeEnum(TranslationStatus));
+export type LanguagesTranslationStatus = z.infer<typeof ZLanguagesTranslationStatus>;
+
+export interface Country {
+  id: string;
+  iso2: string;
+  iso3: string;
+  numericCode: string;
+  name: string;
+  fullName: string;
+}
+
+export interface Language {
+  id: string;
+  code: string;
+  name: string;
+  nativeName: string;
+}
+
+export interface CoalitionMember {
+  id: string;
+  name: string;
+}
+export interface Coalition {
+  id: string;
+  isInCoalition: boolean;
+  name: string;
+  leaderId: string;
+  leaderName: string;
+  numberOfMembers: number;
+  members: CoalitionMember[];
+}
+
+export enum DataSources {
+  Ngo = 'ngo',
+  Coalition = 'coalition',
+}
+
+export interface PollingStation {
+  id: string;
+  level1: string;
+  level2?: string;
+  level3?: string;
+  level4?: string;
+  level5?: string;
+  number: string;
+  address: string;
+  displayOrder: number;
+  tags?: Record<string, string>;
+}
+
+export interface Location {
+  id: string;
+  level1: string;
+  level2?: string;
+  level3?: string;
+  level4?: string;
+  level5?: string;
+  displayOrder: number;
+  tags?: Record<string, any>;
+}
+
+export const importPollingStationSchema = z
+  .object({
+    id: z.string().default(() => crypto.randomUUID()),
+    level1: z.string().min(1, 'Level 1 is required'),
+    level2: z.string().optional().catch(''),
+    level3: z.string().optional().catch(''),
+    level4: z.string().optional().catch(''),
+    level5: z.string().optional().catch(''),
+    address: z.string().min(1, 'Address is required'),
+    number: z.string().min(1, 'Number is required'),
+    displayOrder: z.coerce.number().catch(0),
+    tags: z.record(z.string()).optional().catch({}),
+  })
+  .superRefine((val, ctx) => {
+    if (isNilOrWhitespace(val.level2) && isNotNilOrWhitespace(val.level3)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Level 2 is required if Level 3 is filled in.`,
+        path: ['level2'],
+      });
+    }
+
+    if (isNilOrWhitespace(val.level3) && isNotNilOrWhitespace(val.level4)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Level 3 is required if Level 4 is filled in.`,
+        path: ['level3'],
+      });
+    }
+
+    if (isNilOrWhitespace(val.level4) && isNotNilOrWhitespace(val.level5)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Level 4 is required if Level 5 is filled in.`,
+        path: ['level4'],
+      });
+    }
+  });
+
+export const importLocationSchema = z
+  .object({
+    id: z.string().default(() => crypto.randomUUID()),
+    level1: z.string().min(1, 'Level 1 is required'),
+    level2: z.string().optional(),
+    level3: z.string().optional(),
+    level4: z.string().optional(),
+    level5: z.string().optional(),
+
+    displayOrder: z.coerce.number().catch(0),
+    tags: z.record(z.string()).optional().catch({}),
+  })
+  .superRefine((val, ctx) => {
+    if (isNilOrWhitespace(val.level2) && isNotNilOrWhitespace(val.level3)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Level 2 is required if Level 3 is filled in.`,
+        path: ['level2'],
+      });
+    }
+
+    if (isNilOrWhitespace(val.level3) && isNotNilOrWhitespace(val.level4)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Level 3 is required if Level 4 is filled in.`,
+        path: ['level3'],
+      });
+    }
+
+    if (isNilOrWhitespace(val.level4) && isNotNilOrWhitespace(val.level5)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Level 4 is required if Level 5 is filled in.`,
+        path: ['level4'],
+      });
+    }
+  });
+
+export enum FormStatus {
+  Drafted = 'Drafted',
+  Published = 'Published',
+  Obsolete = 'Obsolete',
+}
+
+export const FormStatusList: FormStatus[] = [FormStatus.Drafted, FormStatus.Published, FormStatus.Obsolete];
+
+export interface FormBase {
+  id: string;
+  formType: FormType;
+  code: string;
+  defaultLanguage: string;
+  icon?: string;
+  name: TranslatedString;
+  description?: TranslatedString;
+  status: FormStatus;
+  languages: string[];
+  lastModifiedOn: string;
+  lastModifiedBy: string;
+  numberOfQuestions: number;
+  languagesTranslationStatus: LanguagesTranslationStatus;
+}
+
+export interface ProblemDetails {
+  type: string;
+  title: string;
+  status: number;
+  detail: string;
+  instance?: string;
+  errors?: { name: string; reason: string }[]; // Maps field names to error messages
+}

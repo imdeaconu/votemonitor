@@ -14,7 +14,7 @@ export function DataTableColumnHeader<TData, TValue>({
   title,
   className,
 }: DataTableColumnHeaderProps<TData, TValue>): ReactElement {
-  if (!column.getCanSort()) {
+  if (!column.columnDef.enableSorting) {
     return <div className={cn(className)}>{title}</div>;
   }
 
@@ -34,7 +34,7 @@ export function DataTableColumnHeader<TData, TValue>({
   );
 
   return (
-    <Button className='gap-2 group' variant='ghost' size='none' onClick={onClick}>
+    <Button type='button' className='gap-2 group' variant='ghost' size='none' onClick={onClick}>
       <span>{title}</span>
       {isCurrentSortAsc ? <ChevronUp className={iconClassName} /> : <ChevronDown className={iconClassName} />}
     </Button>

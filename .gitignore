@@ -7,6 +7,8 @@
 *.userosscache
 *.sln.docstates
 
+.data
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -250,6 +252,7 @@ paket-files/
 
 # JetBrains Rider
 .idea/
+*.iml
 *.sln.iml
 *.sqlite
 *.sqlite-shm
@@ -268,3 +271,5 @@ log*.txt
 .vscode
 
 OfflineCapabilities
+/api/src/Vote.Monitor.Api/Uploads
+**/**/dist
