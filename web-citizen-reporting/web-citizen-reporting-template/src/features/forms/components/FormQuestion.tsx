@@ -11,11 +11,11 @@ import { useAtomValue } from "jotai";
 import { useFormContext } from "react-hook-form";
 import { useShouldDisplayQuestion } from "../hooks/useShouldDisplayQuestion";
 import {
-  FormQuestionMultiSelectInput,
   FormQuestionNumberInput,
   FormQuestionSingleSelectInput,
   FormQuestionTextInput,
 } from "./FormQuestionInputs";
+import { FormQuestionMultiSelectInput } from "./FormQuestionMultiSelectInput";
 
 interface FormQuestionProps {
   question: BaseQuestion;

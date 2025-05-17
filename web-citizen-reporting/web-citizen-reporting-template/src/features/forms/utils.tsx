@@ -4,8 +4,6 @@ import {
   type MultiSelectAnswer,
   type NumberAnswer,
   type RatingAnswer,
-  type SelectedOption,
-  type SelectOption,
   type SingleSelectAnswer,
   type TextAnswer,
 } from "@/common/types";
@@ -65,38 +63,5 @@ export const mapFormDataToAnswer = (
 
     default:
       return value;
-      break;
   }
-};
-export const addOptionToMultiSelectAnswer = (
-  questionId: string,
-  currentValue: MultiSelectAnswer,
-  option: SelectedOption
-) => {
-  let selections = currentValue?.selection ?? [];
-  selections = [...selections, option];
-  let multiselectAnswer: MultiSelectAnswer = {
-    $answerType: AnswerType.MultiSelectAnswerType,
-    questionId,
-    selection: selections,
-  };
-
-  return multiselectAnswer;
-};
-export const removeSelectionFromMultiSelectAnswer = (
-  questionId: string,
-  currentValue: MultiSelectAnswer,
-  optionId: string
-) => {
-  let selections = currentValue?.selection ?? [];
-  const filteredSelections = selections.filter(
-    (selected) => (selected as unknown as SelectOption).id !== optionId
-  );
-
-  const multiselectAnswer: MultiSelectAnswer = {
-    $answerType: AnswerType.MultiSelectAnswerType,
-    questionId,
-    selection: filteredSelections,
-  };
-  return multiselectAnswer;
 };

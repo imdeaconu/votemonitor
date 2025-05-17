@@ -9,6 +9,8 @@ import { currentFormLanguageAtom } from "@/features/forms/atoms";
 import { FormQuestion } from "@/features/forms/components/FormQuestion";
 import { Route } from "@/routes/forms/$formId";
 import { useAtom } from "jotai";
+import { useEffect } from "react";
+import { useFormContext } from "react-hook-form";
 import {
   Select,
   SelectContent,
@@ -23,6 +25,13 @@ function ReportAnswersStep() {
   const [selectedLanguage, setSelectedLanguage] = useAtom(
     currentFormLanguageAtom
   );
+
+  const { watch } = useFormContext();
+  const values = watch();
+
+  useEffect(() => {
+    console.table(values);
+  }, [values]);
 
   return (
     <Card>
