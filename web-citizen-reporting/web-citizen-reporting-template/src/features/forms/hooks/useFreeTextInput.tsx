@@ -2,11 +2,16 @@ import type {
   MultiSelectAnswer,
   MultiSelectQuestion,
   SelectedOption,
+  SingleSelectAnswer,
+  SingleSelectQuestion,
 } from "@/common/types";
+import { isSingleSelectAnswer } from "@/lib/utils";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
-export const useFreeTextInput = (question: MultiSelectQuestion) => {
+export const useFreeTextInput = (
+  question: SingleSelectQuestion | MultiSelectQuestion
+) => {
   const freeTextOption = question.options.find((option) => option.isFreeText);
   const fieldNames = {
     parent: `question-${question.id}`,
@@ -16,11 +21,15 @@ export const useFreeTextInput = (question: MultiSelectQuestion) => {
   const { control } = useFormContext();
   const currentValueFromParent = useWatch({ control, name: fieldNames.parent });
 
-  const isFreeTextOptionSelected = (fieldValue: MultiSelectAnswer) => {
-    if (!freeTextOption || !fieldValue) return false;
+  const isFreeTextOptionSelected = (
+    fieldValue: SingleSelectAnswer | MultiSelectAnswer
+  ) => {
+    if (!freeTextOption || !fieldValue || !fieldValue.selection) return false;
 
-    if (!fieldValue.selection || fieldValue.selection.length === 0)
-      return false;
+    if (isSingleSelectAnswer(fieldValue))
+      return fieldValue.selection.optionId === freeTextOption.id;
+
+    if (fieldValue.selection.length === 0) return false;
 
     const currentSelectionSet = new Set(
       fieldValue.selection.map((opt) => opt.optionId)
@@ -30,6 +39,13 @@ export const useFreeTextInput = (question: MultiSelectQuestion) => {
   };
 
   const addFreeTextToOption = (text: string) => {
+    if (isSingleSelectAnswer(currentValueFromParent)) {
+      return {
+        ...currentValueFromParent,
+        selection: { ...currentValueFromParent.selection, text },
+      };
+    }
+
     const updatedData = currentValueFromParent?.selection?.map(
       (selection: SelectedOption) => {
         if (selection.optionId === freeTextOption?.id)

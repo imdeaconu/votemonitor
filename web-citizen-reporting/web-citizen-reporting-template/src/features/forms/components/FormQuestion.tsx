@@ -8,14 +8,15 @@ import {
   isTextQuestion,
 } from "@/lib/utils";
 import { useAtomValue } from "jotai";
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useShouldDisplayQuestion } from "../hooks/useShouldDisplayQuestion";
 import {
   FormQuestionNumberInput,
-  FormQuestionSingleSelectInput,
   FormQuestionTextInput,
 } from "./FormQuestionInputs";
 import { FormQuestionMultiSelectInput } from "./FormQuestionMultiSelectInput";
+import { FormQuestionSingleSelectInput } from "./FormQuestionSingleSelectInput";
 
 interface FormQuestionProps {
   question: BaseQuestion;
@@ -65,8 +66,17 @@ const BaseFormQuestion = ({ question, isRequired }: FormQuestionProps) => {
 };
 
 const QuestionWithDisplayLogic = ({ question }: { question: BaseQuestion }) => {
-  const { control } = useFormContext();
+  const { control, unregister } = useFormContext();
   const shouldDisplay = useShouldDisplayQuestion({ question, control });
+
+  useEffect(() => {
+    const fieldName = `question-${question.id}`;
+    return () => {
+      // unregister field if user changes the value of the parent and the condition stops matching
+      if (shouldDisplay) unregister(fieldName);
+    };
+  }, [shouldDisplay]);
+
   if (!shouldDisplay) return;
   return <BaseFormQuestion question={question} isRequired={shouldDisplay} />;
 };

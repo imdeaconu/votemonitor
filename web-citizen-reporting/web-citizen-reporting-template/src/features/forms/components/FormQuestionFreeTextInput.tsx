@@ -1,4 +1,7 @@
-import { type MultiSelectQuestion } from "@/common/types";
+import {
+  type MultiSelectQuestion,
+  type SingleSelectQuestion,
+} from "@/common/types";
 import {
   FormControl,
   FormField,
@@ -12,7 +15,7 @@ export const FormQuestionFreeTextInput = ({
   question,
   language,
 }: {
-  question: MultiSelectQuestion;
+  question: SingleSelectQuestion | MultiSelectQuestion;
   language: string;
 }) => {
   const { control, setValue } = useFormContext();
