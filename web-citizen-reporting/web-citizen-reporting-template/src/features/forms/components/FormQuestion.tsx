@@ -4,6 +4,7 @@ import { currentFormLanguageAtom } from "@/features/forms/atoms";
 import {
   isMultiSelectQuestion,
   isNumberQuestion,
+  isRatingQuestion,
   isSingleSelectQuestion,
   isTextQuestion,
 } from "@/lib/utils";
@@ -17,6 +18,7 @@ import {
 } from "./FormQuestionInputs";
 import { FormQuestionMultiSelectInput } from "./FormQuestionMultiSelectInput";
 import { FormQuestionSingleSelectInput } from "./FormQuestionSingleSelectInput";
+import { FormQuestionRatingInput } from "./FormQuestionRatingInput";
 
 interface FormQuestionProps {
   question: BaseQuestion;
@@ -56,6 +58,14 @@ const BaseFormQuestion = ({ question, isRequired }: FormQuestionProps) => {
       )}
       {isMultiSelectQuestion(question) && (
         <FormQuestionMultiSelectInput
+          question={question}
+          language={language}
+          isRequired={isRequired}
+        />
+      )}
+
+      {isRatingQuestion(question) && (
+        <FormQuestionRatingInput
           question={question}
           language={language}
           isRequired={isRequired}

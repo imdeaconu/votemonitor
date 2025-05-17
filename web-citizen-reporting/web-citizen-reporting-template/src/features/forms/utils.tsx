@@ -1,6 +1,7 @@
 import {
   AnswerType,
   QuestionType,
+  RatingScaleType,
   type MultiSelectAnswer,
   type NumberAnswer,
   type RatingAnswer,
@@ -56,7 +57,7 @@ export const mapFormDataToAnswer = (
       const ratingAnswer: RatingAnswer = {
         $answerType: AnswerType.RatingAnswerType,
         questionId,
-        value,
+        value: Number(value),
       };
 
       return ratingAnswer;
@@ -65,3 +66,35 @@ export const mapFormDataToAnswer = (
       return value;
   }
 };
+
+export function ratingScaleToNumber(scale: RatingScaleType): number {
+  switch (scale) {
+    case RatingScaleType.OneTo3: {
+      return 3;
+    }
+    case RatingScaleType.OneTo4: {
+      return 4;
+    }
+    case RatingScaleType.OneTo5: {
+      return 5;
+    }
+    case RatingScaleType.OneTo6: {
+      return 6;
+    }
+    case RatingScaleType.OneTo7: {
+      return 7;
+    }
+    case RatingScaleType.OneTo8: {
+      return 8;
+    }
+    case RatingScaleType.OneTo9: {
+      return 9;
+    }
+    case RatingScaleType.OneTo10: {
+      return 10;
+    }
+    default: {
+      return 5;
+    }
+  }
+}
